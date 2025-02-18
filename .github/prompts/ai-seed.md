@@ -1,0 +1,1 @@
+Is there anything that we can add to the prompt files to increase our chances of getting exactly what we want on the first try? is structured data easier for CoPilot to understand? should we add some metadata? Also, please split up the large template 

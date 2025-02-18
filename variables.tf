@@ -42,7 +42,7 @@ variable "repositories" {
     github_enforce_admins_branch_protection = optional(bool, true)
     additional_codeowners                   = optional(list(any), [])
     prefix                                  = optional(string)
-    force_name                              = optional(bool, false)
+    force_name                              = optional(bool, true)
     github_org_teams                        = optional(list(any))
     template_repo_org                       = optional(string)
     template_repo                           = optional(string)
@@ -98,4 +98,16 @@ variable "initialization_script" {
     content = string
   })
   default = null
+}
+
+variable "enforce_prs" {
+  description = "Whether to enforce pull request reviews before merging. This setting applies to all repositories unless overridden in the repository configuration."
+  type        = bool
+  default     = true
+}
+
+variable "copilot_instructions" {
+  description = "Global instructions for GitHub Copilot. If not provided, instructions will be generated from project and repository prompts."
+  type        = string
+  default     = null
 }
