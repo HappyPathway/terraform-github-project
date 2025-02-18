@@ -11,6 +11,17 @@ locals {
     coalesce(var.workspace_files, [])
   )
 
+  base_init_script = <<-EOT
+#!/bin/bash
+# Clone all repositories
+git clone git@github.com:${try(var.repositories[0].repo_org, "")}/${var.project_name}.git
+%{for repo in var.repositories~}
+git clone git@github.com:${repo.repo_org}/${repo.name}.git
+%{endfor~}
+EOT
+
+  init_script_content = var.initialization_script != null ? "${local.base_init_script}\n\n${var.initialization_script.content}" : local.base_init_script
+
   master_repo = {
     name                    = var.project_name
     github_repo_description = "Master repository for ${var.project_name} project"
@@ -25,6 +36,10 @@ locals {
         content = jsonencode({
           folders = local.workspace_folders
         })
+      },
+      {
+        path = ".init.sh"
+        content = local.init_script_content
       }
     ], coalesce(try(var.repositories[0].managed_extra_files, []), []))
   }

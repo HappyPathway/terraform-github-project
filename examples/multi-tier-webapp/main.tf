@@ -7,23 +7,29 @@ module "acme_shop_project" {
   repositories = [
     {
       name = "acme-shop-frontend"
+      repo_org = "HappyPathway"
       github_repo_description = "Frontend React application for ACME Shop"
       github_repo_topics = ["react", "typescript", "frontend", "vite"]
       github_has_issues = true
+      github_is_private = false
       prompt = file("${path.module}/frontend-README.md")
     },
     {
       name = "acme-shop-api"
+      repo_org = "HappyPathway"
       github_repo_description = "Backend API for ACME Shop"
       github_repo_topics = ["nodejs", "express", "typescript", "api"]
       github_has_issues = true
+      github_is_private = false
       prompt = file("${path.module}/api-README.md")
     },
     {
       name = "acme-shop-db"
+      repo_org = "HappyPathway"
       github_repo_description = "Database schemas and migrations for ACME Shop"
       github_repo_topics = ["postgresql", "database", "migrations"]
       github_has_issues = true
+      github_is_private = false
       prompt = file("${path.module}/db-README.md")
     }
   ]

@@ -90,3 +90,12 @@ variable "repositories" {
     }))
   }))
 }
+
+variable "initialization_script" {
+  description = "Optional custom initialization script to be appended to the default git clone commands"
+  type = object({
+    name    = string
+    content = string
+  })
+  default = null
+}
