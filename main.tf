@@ -1158,7 +1158,7 @@ locals {
 }
 
 module "master_repo" {
-  source = "../terraform-github-repo"
+  source = "HappyPathway/repo/github"
 
   name                                    = local.master_repo_config.name
   repo_org                                = try(local.master_repo_config.repo_org, null)
@@ -1205,7 +1205,7 @@ module "master_repo" {
 }
 
 module "project_repos" {
-  source   = "../terraform-github-repo"
+  source   = "HappyPathway/repo/github"
   for_each = { for idx, repo in var.repositories : repo.name => repo }
 
   name                                    = each.value.name
