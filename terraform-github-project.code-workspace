@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../terraform-github-repo"
+		},
+		{
+			"path": "../providers/terraform-provider-github"
+		}
+	],
+	"settings": {}
+}
