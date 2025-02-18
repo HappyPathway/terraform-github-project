@@ -1145,7 +1145,7 @@ locals {
         })
       },
       {
-        path = ".init.sh"
+        path = "init.sh"
         content = local.init_script_content
       }
     ], coalesce(try(var.repositories[0].managed_extra_files, []), []))
