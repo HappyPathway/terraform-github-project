@@ -10,15 +10,15 @@ output "project_repos" {
 
 output "workspace_file_path" {
   description = "Path to the generated VS Code workspace file"
-  value       = "${module.master_repo.full_name}/${var.project_name}.code-workspace"
+  value       = "${module.master_repo.github_repo.name}/${var.project_name}.code-workspace"
 }
 
 output "copilot_prompts" {
   description = "Paths to the GitHub Copilot prompt files for each repository"
   value = {
-    master = "${module.master_repo.full_name}/.github/prompts/project-setup.prompt.md"
+    master = "${module.master_repo.github_repo.name}/.github/prompts/project-setup.prompt.md"
     repos = {
-      for name, repo in module.project_repos : name => "${repo.full_name}/.github/prompts/repo-setup.prompt.md"
+      for name, repo in module.project_repos : name => "${repo.github_repo.name}/.github/prompts/repo-setup.prompt.md"
     }
   }
 }
