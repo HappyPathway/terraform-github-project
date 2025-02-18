@@ -1161,7 +1161,7 @@ module "master_repo" {
   source = "HappyPathway/repo/github"
 
   name                                    = local.master_repo_config.name
-  repo_org                                = try(local.master_repo_config.repo_org, null)
+  repo_org                                = var.repo_org
   github_repo_description                 = local.master_repo_config.github_repo_description
   github_repo_topics                      = local.master_repo_config.github_repo_topics
   github_push_restrictions                = try(local.master_repo_config.github_push_restrictions, [])
@@ -1209,7 +1209,7 @@ module "project_repos" {
   for_each = { for idx, repo in var.repositories : repo.name => repo }
 
   name                                    = each.value.name
-  repo_org                                = each.value.repo_org
+  repo_org                                = var.repo_org
   github_repo_description                 = each.value.github_repo_description
   github_repo_topics                      = each.value.github_repo_topics
   github_push_restrictions                = each.value.github_push_restrictions

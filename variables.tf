@@ -111,3 +111,9 @@ variable "copilot_instructions" {
   type        = string
   default     = null
 }
+
+variable repo_org {
+  description = "Default organization for repositories. If not provided, repositories will be created in the user's personal account."
+  type        = string
+  default     = null
+}

@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../providers/terraform-provider-github"
+		},
+		{
+			"path": "../github-projects"
 		}
 	],
 	"settings": {}
