@@ -1135,7 +1135,7 @@ locals {
         content = var.project_prompt
       },
       {
-        path    = ".github/copilot-instructions"
+        path    = ".github/copilot-instructions.md"
         content = coalesce(var.copilot_instructions, local.generated_copilot_instructions)
       },
       {
