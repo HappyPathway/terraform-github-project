@@ -105,7 +105,6 @@ variable "base_repository" {
   description = "Configuration for the base repository. This repository serves as the foundation for the project and contains shared configurations."
   type = object({
     # Core settings
-    name                    = optional(string)
     description            = optional(string)
     homepage_url           = optional(string)
     topics                 = optional(list(string), ["project-base"])

@@ -70,7 +70,7 @@ module "base_repo" {
   source = "HappyPathway/repo/github"
   
   # Ensure required parameters are set
-  name = local.base_repository.name
+  name = var.project_name
   repo_org = var.repo_org
   force_name = true  # Prevent date suffix
   
