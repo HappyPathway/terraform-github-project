@@ -76,7 +76,7 @@ variable "repositories" {
     managed_extra_files = optional(list(object({
       path = string
       content = string
-    })), [])
+    })))
     pull_request_bypassers = optional(list(string), [])
     create_codeowners = optional(bool, true)
     enforce_prs = optional(bool, true)
@@ -174,7 +174,7 @@ variable "base_repository" {
     managed_extra_files   = optional(list(object({
       path    = string
       content = string
-    })), [])
+    })))
     allow_unsigned_files  = optional(bool, false)
     commit_author        = optional(string, "Terraform")
     commit_email         = optional(string, "terraform@example.com")

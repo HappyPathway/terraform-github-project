@@ -25,7 +25,7 @@ locals {
       dismiss_stale_reviews = true
       require_code_owner_reviews = true
     }
-    managed_extra_files = [
+    managed_extra_files = concat([
       {
         path    = ".github/prompts/project.prompt.md"
         content = var.project_prompt
@@ -61,8 +61,8 @@ locals {
           }
         })
       }
-    ]
-  }, var.base_repository)
+    ], var.base_repository.managed_extra_files)
+  }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
 
 # Create base repository without branch protection or files initially
