@@ -5,15 +5,27 @@ data "github_repository" "existing_repos" {
 }
 
 locals {
-  master_repo = {
-    name                    = var.project_name
-    github_repo_description = "Master repository for ${var.project_name} project"
-    github_repo_topics      = ["project-master"]
-    force_name              = true
-    archive_on_destroy      = false
-    create_repo             = true
-    github_has_issues       = true
-    managed_extra_files = concat([
+  base_repository = merge({
+    name = var.project_name  # Ensure name is always set
+    description = "Base repository for ${var.project_name} project"
+    topics = ["project-base"]
+    visibility = "private"
+    has_issues = true
+    has_wiki = true
+    has_projects = true
+    enable_branch_protection = true
+    create_codeowners = true
+    force_name = true  # Ensure consistent naming without date suffix
+    create_repo = true
+    branch_protection = {
+      enforce_admins = true
+      required_linear_history = true
+      require_conversation_resolution = true
+      required_approving_review_count = 1
+      dismiss_stale_reviews = true
+      require_code_owner_reviews = true
+    }
+    managed_extra_files = [
       {
         path    = ".github/prompts/project.prompt.md"
         content = var.project_prompt
@@ -49,66 +61,129 @@ locals {
           }
         })
       }
-    ], coalesce(try(var.repositories[0].managed_extra_files, []), []))
-  }
-
-  master_repo_config = merge(
-    try(var.repositories[0], {}),
-    local.master_repo,
-    try(var.repositories[0].create_repo, true) ? {} : {
-      github_repo_node_id = data.github_repository.existing_repos[var.repositories[0].name].node_id
-    }
-  )
+    ]
+  }, var.base_repository)
 }
 
-module "master_repo" {
+# Create base repository without branch protection or files initially
+module "base_repo" {
   source = "HappyPathway/repo/github"
+  
+  # Ensure required parameters are set
+  name = local.base_repository.name
+  repo_org = var.repo_org
+  force_name = true  # Prevent date suffix
+  
+  # Basic repository settings
+  create_repo = true
+  enforce_prs = false  # Disable branch protection initially
+  github_repo_description = local.base_repository.description
+  github_repo_topics = local.base_repository.topics
+  github_is_private = local.base_repository.visibility == "private"
+  github_has_issues = local.base_repository.has_issues
+  github_has_wiki = local.base_repository.has_wiki
+  github_has_projects = local.base_repository.has_projects
+  github_has_discussions = local.base_repository.has_discussions
+  github_has_downloads = local.base_repository.has_downloads
+  
+  # Git settings
+  github_default_branch = local.base_repository.default_branch
+  github_allow_merge_commit = local.base_repository.allow_merge_commit
+  github_allow_squash_merge = local.base_repository.allow_squash_merge
+  github_allow_rebase_merge = local.base_repository.allow_rebase_merge
+  github_allow_auto_merge = local.base_repository.allow_auto_merge
+  github_delete_branch_on_merge = local.base_repository.delete_branch_on_merge
+  github_allow_update_branch = local.base_repository.allow_update_branch
 
-  name                                   = local.master_repo_config.name
-  repo_org                              = var.repo_org
-  create_repo                           = true
-  github_repo_description               = local.master_repo_config.github_repo_description
-  github_repo_topics                    = local.master_repo_config.github_repo_topics
-  github_push_restrictions              = try(local.master_repo_config.github_push_restrictions, [])
-  github_is_private                     = try(local.master_repo_config.github_is_private, true)
-  github_auto_init                      = try(local.master_repo_config.github_auto_init, true)
-  github_allow_merge_commit             = try(local.master_repo_config.github_allow_merge_commit, false)
-  github_allow_squash_merge             = try(local.master_repo_config.github_allow_squash_merge, true)
-  github_allow_rebase_merge             = try(local.master_repo_config.github_allow_rebase_merge, false)
-  github_delete_branch_on_merge         = try(local.master_repo_config.github_delete_branch_on_merge, true)
-  github_has_projects                   = try(local.master_repo_config.github_has_projects, true)
-  github_has_issues                     = try(local.master_repo_config.github_has_issues, false)
-  github_has_wiki                       = try(local.master_repo_config.github_has_wiki, true)
-  github_default_branch                 = try(local.master_repo_config.github_default_branch, "main")
-  enforce_prs                           = try(local.master_repo_config.enforce_prs, var.enforce_prs)
-  github_required_approving_review_count = try(local.master_repo_config.github_required_approving_review_count, 1)
-  github_require_code_owner_reviews     = try(local.master_repo_config.github_require_code_owner_reviews, true)
-  github_dismiss_stale_reviews          = try(local.master_repo_config.github_dismiss_stale_reviews, true)
-  github_enforce_admins_branch_protection = try(local.master_repo_config.github_enforce_admins_branch_protection, true)
-  additional_codeowners                 = try(local.master_repo_config.additional_codeowners, [])
-  prefix                                = try(local.master_repo_config.prefix, null)
-  force_name                            = try(local.master_repo_config.force_name, false)
-  github_org_teams                      = try(local.master_repo_config.github_org_teams, null)
-  template_repo_org                     = try(local.master_repo_config.template_repo_org, null)
-  template_repo                         = try(local.master_repo_config.template_repo, null)
-  is_template                           = try(local.master_repo_config.is_template, false)
-  admin_teams                           = try(local.master_repo_config.admin_teams, [])
-  required_status_checks                = try(local.master_repo_config.required_status_checks, null)
-  archived                              = try(local.master_repo_config.archived, false)
-  secrets                               = try(local.master_repo_config.secrets, [])
-  vars                                  = try(local.master_repo_config.vars, [])
-  extra_files                           = try(local.master_repo_config.extra_files, [])
-  managed_extra_files                   = local.master_repo_config.managed_extra_files
-  pull_request_bypassers                = try(local.master_repo_config.pull_request_bypassers, [])
-  create_codeowners                     = try(local.master_repo_config.create_codeowners, true)
-  collaborators                         = try(local.master_repo_config.collaborators, {})
-  archive_on_destroy                    = try(local.master_repo_config.archive_on_destroy, true)
-  vulnerability_alerts                  = try(local.master_repo_config.vulnerability_alerts, false)
-  gitignore_template                    = try(local.master_repo_config.gitignore_template, null)
-  homepage_url                          = try(local.master_repo_config.homepage_url, null)
-  security_and_analysis                 = try(local.master_repo_config.security_and_analysis, null)
+  # Don't manage files in the module
+  extra_files = []
+  managed_extra_files = []
 
-  depends_on = [data.github_organization.org]
+  # Teams and access control
+  admin_teams = local.base_repository.admin_teams
+  github_org_teams = local.base_repository.github_org_teams
+
+  # Additional settings
+  archived = local.base_repository.archived
+  archive_on_destroy = local.base_repository.archive_on_destroy
+  vulnerability_alerts = local.base_repository.vulnerability_alerts
+  gitignore_template = local.base_repository.gitignore_template
+  license_template = local.base_repository.license_template
+  homepage_url = local.base_repository.homepage_url
+  security_and_analysis = local.base_repository.security_and_analysis
+
+  # Source template if specified
+  template_repo = try(local.base_repository.template.repository, null)
+  template_repo_org = try(local.base_repository.template.owner, null)
+}
+
+// Create repository files
+resource "github_repository_file" "base_repo_files" {
+  for_each = {
+    for file in local.base_repository.managed_extra_files :
+    file.path => file
+  }
+
+  repository          = module.base_repo.github_repo.name
+  branch             = module.base_repo.default_branch
+  file               = each.value.path
+  content            = each.value.content
+  commit_message     = "Add ${each.value.path}"
+  overwrite_on_create = true
+
+  depends_on = [module.base_repo]
+}
+
+// Add CODEOWNERS file
+resource "github_repository_file" "base_repo_codeowners" {
+  count = local.base_repository.create_codeowners ? 1 : 0
+
+  repository          = module.base_repo.github_repo.name
+  branch             = module.base_repo.default_branch
+  file               = "CODEOWNERS"
+  content            = templatefile("${path.module}/templates/CODEOWNERS", {
+    codeowners = concat(
+      try(local.base_repository.codeowners, []),
+      formatlist("* @%s", try(local.base_repository.admin_teams, []))
+    )
+  })
+  commit_message     = "Add CODEOWNERS file"
+  overwrite_on_create = true
+
+  depends_on = [module.base_repo]
+}
+
+// Add branch protection after files are created
+resource "github_branch_protection" "base_repo" {
+  count = local.base_repository.enable_branch_protection ? 1 : 0
+
+  repository_id = module.base_repo.github_repo.node_id
+  pattern       = module.base_repo.default_branch
+
+  enforce_admins         = local.base_repository.branch_protection.enforce_admins
+  required_linear_history = local.base_repository.branch_protection.required_linear_history
+  allows_force_pushes     = try(local.base_repository.branch_protection.allow_force_pushes, false)
+  allows_deletions        = try(local.base_repository.branch_protection.allow_deletions, false)
+  require_signed_commits = try(local.base_repository.require_signed_commits, false)
+  
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = local.base_repository.branch_protection.dismiss_stale_reviews
+    require_code_owner_reviews      = local.base_repository.branch_protection.require_code_owner_reviews
+    required_approving_review_count = local.base_repository.branch_protection.required_approving_review_count
+  }
+
+  dynamic "required_status_checks" {
+    for_each = try(local.base_repository.branch_protection.required_status_checks, null) != null ? ["true"] : []
+    content {
+      strict   = try(local.base_repository.branch_protection.required_status_checks.strict, true)
+      contexts = try(local.base_repository.branch_protection.required_status_checks.contexts, [])
+    }
+  }
+
+  depends_on = [
+    github_repository_file.base_repo_files,
+    github_repository_file.base_repo_codeowners
+  ]
 }
 
 module "project_repos" {
@@ -165,5 +240,5 @@ module "project_repos" {
   homepage_url                          = each.value.homepage_url
   security_and_analysis                 = each.value.security_and_analysis
 
-  depends_on = [module.master_repo]
+  depends_on = [module.base_repo]
 }
