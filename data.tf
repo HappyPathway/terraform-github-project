@@ -1,3 +1,7 @@
+data "github_organization" "org" {
+  name = var.repo_org
+}
+
 // ...existing data blocks...
 
 data "github_repository" "existing_lookup" {
