@@ -61,7 +61,7 @@ locals {
           }
         })
       }
-    ], var.base_repository.managed_extra_files)
+    ], var.base_repository.managed_extra_files != null ? var.base_repository.managed_extra_files : [])
   }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
 
