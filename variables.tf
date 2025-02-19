@@ -23,6 +23,7 @@ variable "repositories" {
     name                                    = string
     repo_org                                = optional(string)
     prompt                                  = string # GitHub Copilot prompt for repository-specific code generation
+    create_repo                             = optional(bool, true)  # Whether to create a new repository or lookup an existing one
     github_repo_description                 = optional(string)
     github_repo_topics                      = optional(list(any), [])
     github_push_restrictions                = optional(list(any), [])
@@ -89,6 +90,25 @@ variable "repositories" {
       }), { status = "disabled" })
     }))
   }))
+
+  validation {
+    condition = alltrue([
+      for repo in var.repositories :
+      repo.create_repo == true || (
+        repo.name != null &&
+        (var.repo_org != null || repo.repo_org != null)
+      )
+    ])
+    error_message = "When create_repo is false, both name and repo_org (either in the repository config or as a module variable) must be provided to lookup existing repositories."
+  }
+
+  validation {
+    condition = alltrue([
+      for repo in var.repositories :
+      repo.prompt != null
+    ])
+    error_message = "A GitHub Copilot prompt must be provided for each repository."
+  }
 }
 
 variable "initialization_script" {
@@ -116,4 +136,37 @@ variable repo_org {
   description = "Default organization for repositories. If not provided, repositories will be created in the user's personal account."
   type        = string
   default     = null
+}
+
+variable "environments" {
+  description = "Configuration for GitHub environments in each repository"
+  type = map(list(object({
+    name = string
+    reviewers = optional(object({
+      teams = optional(list(string), [])
+      users = optional(list(string), [])
+    }), {})
+    deployment_branch_policy = optional(object({
+      protected_branches     = optional(bool, true)
+      custom_branch_policies = optional(bool, false)
+    }), {})
+    secrets = optional(list(object({
+      name  = string
+      value = string
+    })), [])
+    vars = optional(list(object({
+      name  = string
+      value = string
+    })), [])
+  })))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for env_list in values(var.environments) : alltrue([
+        for env in env_list : can(regex("^[a-zA-Z0-9_-]+$", env.name))
+      ])
+    ])
+    error_message = "Environment names must contain only alphanumeric characters, underscores, and hyphens."
+  }
 }

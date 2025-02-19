@@ -1,11 +1,11 @@
 locals {
   workspace_folders = concat(
     [{
-      name = var.project_name
+      name = var.project_name,
       path = "."
     }],
     [for repo in var.repositories : {
-      name = repo.name
+      name = repo.name,
       path = "../${repo.name}"
     }],
     coalesce(var.workspace_files, [])
@@ -22,8 +22,14 @@ locals {
     for repo in var.repositories : [
       for topic in coalesce(repo.github_repo_topics, []) :
       upper(topic) if contains([
-        "soc2", "iso27001", "fedramp", "pci-dss", 
-        "hipaa", "gdpr", "ccpa", "nist"
+        "soc2",
+        "iso27001",
+        "fedramp",
+        "pci-dss",
+        "hipaa",
+        "gdpr",
+        "ccpa",
+        "nist"
       ], lower(topic))
     ]
   ]))
@@ -60,7 +66,7 @@ locals {
       status_checks = distinct(flatten([
         for repo in var.repositories : 
         try(repo.required_status_checks.contexts, [])
-      ]))
+      ])),
       strict_updates = anytrue([
         for repo in var.repositories :
         try(repo.required_status_checks.strict, false)
@@ -126,10 +132,10 @@ locals {
     code_quality = {
       linting_required = anytrue([
         for repo in var.repositories :
-        contains(coalesce(try(repo.required_status_checks.contexts, []), []), "lint") ||
+        contains(coalesce(try(repo.required_status_checks.contexts, []), "lint") ||
         contains(coalesce(repo.github_repo_topics, []), "eslint") ||
-        contains(coalesce(repo.github_repo_topics, []), "prettier")
-      ])
+        contains(coalesce(repo.github_repo_topics, []), "prettier"))
+      ]),
       formatting_tools = distinct(flatten([
         for repo in var.repositories : [
           for topic in coalesce(repo.github_repo_topics, []) :
@@ -528,7 +534,7 @@ locals {
     1. Project Structure:
        - Each repository has its specific responsibility
        - Changes must maintain separation of concerns
-       - Repository organization: ${join(", ", [for repo in var.repositories : repo.repo_org])}
+       - Repository organization: ${var.repo_org}
        ${local.repo_analysis.templating.uses_templates ? "- Uses repository templates from: ${join(", ", local.repo_analysis.templating.template_sources)}" : ""}
        ${local.repo_analysis.templating.is_template ? "- Contains template repositories for reuse" : ""}
 
@@ -1162,6 +1168,7 @@ module "master_repo" {
 
   name                                    = local.master_repo_config.name
   repo_org                                = var.repo_org
+  create_repo                             = try(local.master_repo_config.create_repo, true)
   github_repo_description                 = local.master_repo_config.github_repo_description
   github_repo_topics                      = local.master_repo_config.github_repo_topics
   github_push_restrictions                = try(local.master_repo_config.github_push_restrictions, [])
@@ -1210,6 +1217,7 @@ module "project_repos" {
 
   name                                    = each.value.name
   repo_org                                = var.repo_org
+  create_repo                            = try(each.value.create_repo, true)
   github_repo_description                 = each.value.github_repo_description
   github_repo_topics                      = each.value.github_repo_topics
   github_push_restrictions                = each.value.github_push_restrictions

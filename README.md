@@ -5,11 +5,11 @@
 
 # Terraform GitHub Project Module
 
-This module helps you manage multiple GitHub repositories as a single project. It creates a main repository (master repo) and any other repositories you need for your project. It works well with GitHub Copilot for AI-assisted development.
+This module helps you manage multiple GitHub repositories as a single project. It creates a main repository (master repo) and any other repositories you need for your project. You can either create new repositories or manage existing ones.
 
 ## What This Module Does
 
-- Creates a main repository and multiple project repositories
+- Creates or manages a main repository and multiple project repositories
 - Sets up GitHub Copilot to help write code for your project
 - Creates smart coding guidelines based on your project setup
 - Makes a VS Code workspace file that connects all your repositories
@@ -296,6 +296,33 @@ This creates guidelines including:
 - Identity-based access controls
 - Security monitoring requirements
 
+## Example: Managing Existing Repositories
+
+```hcl
+module "existing_project" {
+  source = "path/to/terraform-github-project"
+  project_name = "existing-project"
+  
+  project_prompt = "Managing existing repositories in our organization"
+  
+  repositories = [
+    {
+      name = "existing-repo-1"
+      create_repo = false  # This tells Terraform to manage an existing repository
+      prompt = "First existing repository"
+      github_repo_description = "Managing an existing repository"
+      github_repo_topics = ["existing", "managed"]
+    },
+    {
+      name = "existing-repo-2"
+      create_repo = false
+      prompt = "Second existing repository"
+      github_repo_topics = ["existing", "managed"]
+    }
+  ]
+}
+```
+
 ## Security Analysis Features
 
 The module automatically detects and provides guidelines for:
@@ -400,23 +427,62 @@ module "my_project" {
 | project_name | The name of your project | string | Yes | - |
 | project_prompt | Instructions for GitHub Copilot about your whole project | string | Yes | - |
 | copilot_instructions | Custom coding rules for GitHub Copilot | string | No | Auto-generated from project setup |
-| repositories | List of repositories to create | list(object) | Yes | - |
+| repositories | List of repositories to create or manage | list(object) | Yes | - |
 | workspace_files | Extra files to include in your workspace | list(object) | No | [] |
 | enforce_prs | Require pull request reviews for all repositories | bool | No | true |
 
 Each repository in your `repositories` list can have these settings:
+- `name` - Name of the repository (required)
+- `create_repo` - Whether to create a new repository or manage an existing one (default: true)
+- `prompt` - Help GitHub Copilot understand the repository
 - All standard GitHub repository settings
-- A `prompt` field to help GitHub Copilot understand the repository
 - `force_name` is true by default (keeps the exact name you choose)
 
 ## What You Get Back (Outputs)
 
 | Name | What It Tells You |
 |------|------------------|
-| master_repo | Information about your main repository |
-| project_repos | Information about all your project repositories |
+| master_repo | All attributes of your main repository (name, URLs, settings, etc.) |
+| project_repos | All attributes of your project repositories |
 | workspace_file_path | Where to find the VS Code workspace file |
 | copilot_prompts | Where to find the GitHub Copilot instruction files |
+| repository_urls | Easy access to all repository URLs (HTML, SSH, HTTP, Git) |
+| security_status | Security settings status for all repositories |
+
+### Repository Attributes Available in Outputs
+
+For each repository (both master and project repos), you get:
+
+Basic Info:
+- name - Repository name
+- full_name - Full repository name (org/repo)
+- description - Repository description
+- html_url - GitHub web URL
+- ssh_url - SSH clone URL
+- http_url - HTTPS clone URL
+- git_url - Git protocol URL
+- visibility - Public or private status
+
+Settings:
+- topics - Repository topics
+- has_issues - Issue tracking enabled
+- has_projects - Project boards enabled
+- has_wiki - Wiki enabled
+- is_template - Template repository status
+- allow_merge_commit - Merge commit allowed
+- allow_squash_merge - Squash merge allowed
+- allow_rebase_merge - Rebase merge allowed
+- allow_auto_merge - Auto-merge enabled
+- delete_branch_on_merge - Branch deletion on merge
+
+Additional Info:
+- default_branch - Default branch name
+- archived - Archive status
+- homepage_url - Homepage URL if set
+- vulnerability_alerts - Vulnerability alerts status
+- template - Template repository details if used
+- gitignore_template - .gitignore template if used
+- license_template - License template if used
 
 ## VS Code Setup
 

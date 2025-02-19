@@ -41,3 +41,51 @@ module "acme_shop_project" {
     }
   ]
 }
+
+module "example" {
+  source = "../../"
+
+  project_name = "multi-tier-webapp"
+  project_prompt = "Multi-tier web application with frontend, API, and database components."
+  repo_org = "MyOrganization"
+
+  repositories = [
+    {
+      name = "frontend"
+      prompt = "React-based frontend application"
+      create_repo = true  # Create a new repository
+      github_repo_description = "Frontend web application"
+      github_repo_topics = ["frontend", "react", "typescript"]
+      github_has_issues = true
+      vulnerability_alerts = true
+    },
+    {
+      name = "backend-api"
+      prompt = "Node.js REST API service"
+      create_repo = false  # Manage an existing repository
+      github_repo_description = "Backend API service"
+      github_repo_topics = ["backend", "node", "api"]
+      github_has_issues = true
+      enforce_prs = true
+      github_required_approving_review_count = 2
+    },
+    {
+      name = "database"
+      prompt = "Database schema and migrations"
+      create_repo = false  # Manage an existing repository
+      github_repo_description = "Database management"
+      github_repo_topics = ["database", "postgresql", "migrations"]
+      security_and_analysis = {
+        secret_scanning = {
+          status = "enabled"
+        }
+        secret_scanning_push_protection = {
+          status = "enabled"
+        }
+      }
+    }
+  ]
+
+  # Enable pull request reviews by default
+  enforce_prs = true
+}
