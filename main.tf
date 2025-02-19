@@ -9,14 +9,17 @@ locals {
     name                    = var.project_name
     github_repo_description = "Master repository for ${var.project_name} project"
     github_repo_topics      = ["project-master"]
-    force_name              = try(var.repositories[0].force_name, true)
+    force_name              = true
+    archive_on_destroy      = false
+    create_repo             = true
+    github_has_issues       = true
     managed_extra_files = concat([
       {
         path    = ".github/prompts/project.prompt.md"
         content = var.project_prompt
       },
       {
-        path    = ".github/prompts/copilot-instructions.prompt.md"
+        path    = ".github/copilot-instructions.md"
         content = coalesce(var.copilot_instructions, local.generated_copilot_instructions)
       },
       {
