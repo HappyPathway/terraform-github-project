@@ -24,16 +24,13 @@ output "master_repo" {
     delete_branch_on_merge = module.master_repo.github_repo.delete_branch_on_merge
     
     # Additional metadata
-    default_branch        = module.master_repo.github_repo.default_branch
-    archived             = module.master_repo.github_repo.archived
-    homepage_url         = module.master_repo.github_repo.homepage_url
-    vulnerability_alerts = module.master_repo.github_repo.vulnerability_alerts
-    node_id             = module.master_repo.github_repo.node_id
+    default_branch = module.master_repo.github_repo.default_branch
+    archived      = module.master_repo.github_repo.archived
+    homepage_url  = module.master_repo.github_repo.homepage_url
+    node_id      = module.master_repo.github_repo.node_id
     
     # Git details
     template = module.master_repo.github_repo.template
-    gitignore_template = module.master_repo.github_repo.gitignore_template
-    license_template   = module.master_repo.github_repo.license_template
   }
 }
 
@@ -64,31 +61,28 @@ output "project_repos" {
       delete_branch_on_merge = repo.github_repo.delete_branch_on_merge
       
       # Additional metadata
-      default_branch        = repo.github_repo.default_branch
-      archived             = repo.github_repo.archived
-      homepage_url         = repo.github_repo.homepage_url
-      vulnerability_alerts = repo.github_repo.vulnerability_alerts
-      node_id             = repo.github_repo.node_id
+      default_branch = repo.github_repo.default_branch
+      archived      = repo.github_repo.archived
+      homepage_url  = repo.github_repo.homepage_url
+      node_id      = repo.github_repo.node_id
       
       # Git details
       template = repo.github_repo.template
-      gitignore_template = repo.github_repo.gitignore_template
-      license_template   = repo.github_repo.license_template
     }
   }
 }
 
 output "workspace_file_path" {
   description = "Path to the generated VS Code workspace file"
-  value       = "${module.master_repo.github_repo.name}/${var.project_name}.code-workspace"
+  value       = try("${module.master_repo.github_repo.name}/${var.project_name}.code-workspace", null)
 }
 
 output "copilot_prompts" {
   description = "Paths to the GitHub Copilot prompt files for each repository"
   value = {
-    master = "${module.master_repo.github_repo.name}/.github/prompts/project-setup.prompt.md"
+    master = try("${module.master_repo.github_repo.name}/.github/prompts/project-setup.prompt.md", null)
     repos = {
-      for name, repo in module.project_repos : name => "${repo.github_repo.name}/.github/prompts/repo-setup.prompt.md"
+      for name, repo in module.project_repos : name => try("${repo.github_repo.name}/.github/prompts/repo-setup.prompt.md", null)
     }
   }
 }
@@ -125,13 +119,11 @@ output "security_status" {
   description = "Security configuration status for all repositories"
   value = merge(
     { (var.project_name) = {
-      private              = module.master_repo.github_repo.visibility == "private"
-      vulnerability_alerts = module.master_repo.github_repo.vulnerability_alerts
+      private = module.master_repo.github_repo.visibility == "private"
     }},
     {
       for name, repo in module.project_repos : name => {
-        private              = repo.github_repo.visibility == "private"
-        vulnerability_alerts = repo.github_repo.vulnerability_alerts
+        private = repo.github_repo.visibility == "private"
       }
     }
   )
