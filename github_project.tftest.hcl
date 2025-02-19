@@ -88,13 +88,18 @@ run "verify_base_repository_creation" {
   }
 
   assert {
-    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.base_repository.name))
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.project_name))
     error_message = "Base repository name contains invalid characters"
   }
 
   assert {
     condition     = var.base_repository.visibility == "public"
     error_message = "Base repository must be public for branch protection in non-Pro accounts"
+  }
+
+  assert {
+    condition     = var.base_repository.create_repo == true
+    error_message = "Base repository creation should be enabled"
   }
 }
 
