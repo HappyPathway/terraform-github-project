@@ -63,7 +63,7 @@ module "master_repo" {
 
   name                                   = local.master_repo_config.name
   repo_org                              = var.repo_org
-  create_repo                           = try(local.master_repo_config.create_repo, true)
+  create_repo                           = true
   github_repo_description               = local.master_repo_config.github_repo_description
   github_repo_topics                    = local.master_repo_config.github_repo_topics
   github_push_restrictions              = try(local.master_repo_config.github_push_restrictions, [])
