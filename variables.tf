@@ -258,3 +258,9 @@ variable "environments" {
     error_message = "Environment names must contain only alphanumeric characters, underscores, and hyphens."
   }
 }
+
+variable "default_branch" {
+  description = "The default branch name for all repositories"
+  type        = string
+  default     = "main"
+}

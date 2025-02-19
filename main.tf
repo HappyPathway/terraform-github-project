@@ -186,6 +186,24 @@ resource "github_branch_protection" "base_repo" {
   ]
 }
 
+# Create initialization files in the base repository
+resource "github_repository_file" "project_files" {
+  for_each = local.repo_files
+
+  repository = var.repositories[0].name
+  branch     = var.default_branch
+  file       = each.key
+  content    = each.value.content
+  commit_message = "Add ${each.value.description}"
+  
+  lifecycle {
+    precondition {
+      condition     = length(var.repositories) > 0
+      error_message = "At least one repository must be specified to create initialization files"
+    }
+  }
+}
+
 module "project_repos" {
   source   = "HappyPathway/repo/github"
   for_each = { for idx, repo in var.repositories : repo.name => repo }
