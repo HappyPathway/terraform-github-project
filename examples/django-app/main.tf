@@ -55,17 +55,6 @@ module "django_project" {
       branch = "gh-pages"
       path   = "/docs"
     }
-    security_and_analysis = {
-      advanced_security = {
-        status = "enabled"
-      }
-      secret_scanning = {
-        status = "enabled"
-      }
-      secret_scanning_push_protection = {
-        status = "enabled"
-      }
-    }
   }
 
   # Environment configuration

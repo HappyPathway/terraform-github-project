@@ -20,11 +20,11 @@ module "java_microservices" {
         require_code_owner_reviews = true
         required_approving_review_count = 2
       }
-      security_and_analysis = {
-        advanced_security = {
-          status = "enabled"
-        }
-      }
+      # security_and_analysis = {
+      #   advanced_security = {
+      #     status = "enabled"
+      #   }
+      # }
     },
     {
       name        = "order-service"
@@ -64,14 +64,14 @@ module "java_microservices" {
       required_approving_review_count = 2
       dismiss_stale_reviews = true
     }
-    security_and_analysis = {
-      advanced_security = {
-        status = "enabled"
-      }
-      secret_scanning = {
-        status = "enabled"
-      }
-    }
+    # security_and_analysis = {
+    #   advanced_security = {
+    #     status = "enabled"
+    #   }
+    #   secret_scanning = {
+    #     status = "enabled"
+    #   }
+    # }
   }
 
   environments = {
