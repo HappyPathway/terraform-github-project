@@ -73,8 +73,12 @@ output "project_repos" {
 }
 
 output "workspace_file_path" {
-  description = "Path to the generated VS Code workspace file"
-  value       = try("${module.base_repo.github_repo.name}/${var.project_name}.code-workspace", null)
+  description = "Path to the VS Code workspace file in the base repository"
+  value = {
+    repository = var.base_repository.name
+    path      = "${var.project_name}.code-workspace"
+    html_url  = "https://github.com/${var.repo_org}/${var.base_repository.name}/blob/${coalesce(var.base_repository.default_branch, "main")}/${var.project_name}.code-workspace"
+  }
 }
 
 output "copilot_prompts" {

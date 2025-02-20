@@ -192,7 +192,7 @@ variable "base_repository" {
     })))
     allow_unsigned_files  = optional(bool, false)
     commit_author        = optional(string, "Terraform")
-    commit_email         = optional(string, "terraform@example.com")
+    commit_email         = optional(string, "terraform@roknsound.com")
     
     # Access control
     admin_teams           = optional(list(string), [])
