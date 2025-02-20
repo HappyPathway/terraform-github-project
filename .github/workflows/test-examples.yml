@@ -12,6 +12,11 @@ on:
       - 'examples/**'
       - '.github/workflows/test-examples.yml'
 
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  GITHUB_ORG: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
+  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
 permissions:
   contents: read
   pull-requests: read
@@ -47,9 +52,6 @@ jobs:
 
       - name: Create Terraform Variables
         working-directory: examples/${{ matrix.example }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_ORG: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
         run: |
           cat > terraform.tfvars <<EOF
           repo_org = "$GITHUB_ORG"
@@ -59,9 +61,6 @@ jobs:
 
       - name: Terraform Init and Apply
         working-directory: examples/${{ matrix.example }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_OWNER: ${{ github.repository_owner }}
         run: |
           terraform init
           terraform apply -auto-approve
