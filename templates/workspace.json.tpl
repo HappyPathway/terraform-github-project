@@ -1,8 +1,6 @@
 {
   "folders": ${jsonencode(folders)},
-  "extensions": {
-    "recommendations": ${jsonencode(recommended_extensions)}
-  },
+  "recommendations": ${jsonencode(recommended_extensions)},
   "settings": {
     "files.exclude": {
       "**/.git": true,

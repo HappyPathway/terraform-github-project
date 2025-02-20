@@ -37,12 +37,7 @@ locals {
       {
         path    = ".vscode/extensions.json"
         content = jsonencode({
-          recommendations = [
-            "hashicorp.terraform",
-            "github.vscode-github-actions",
-            "github.copilot",
-            "github.copilot-chat"
-          ]
+          recommendations = local.recommended_extensions
         })
       },
       {
@@ -187,21 +182,14 @@ resource "github_branch_protection" "base_repo" {
 }
 
 # Create initialization files in the base repository
-resource "github_repository_file" "project_files" {
+resource "github_repository_file" "base_files" {
   for_each = local.repo_files
 
-  repository = var.repositories[0].name
-  branch     = var.default_branch
-  file       = each.key
-  content    = each.value.content
+  repository     = module.base_repo.github_repo.name
+  branch         = var.default_branch
+  file           = each.key
+  content        = each.value.content
   commit_message = "Add ${each.value.description}"
-  
-  lifecycle {
-    precondition {
-      condition     = length(var.repositories) > 0
-      error_message = "At least one repository must be specified to create initialization files"
-    }
-  }
 }
 
 module "project_repos" {

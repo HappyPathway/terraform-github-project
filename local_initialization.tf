@@ -24,7 +24,7 @@ locals {
 
   # Files to be created in the base repository
   repo_files = {
-    "workspace.json" = {
+    "${var.project_name}.code-workspace" = {
       content = local.workspace_content
       description = "VS Code workspace configuration"
     }
