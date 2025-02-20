@@ -9,9 +9,9 @@ locals {
       for repo in var.repositories : [
         for topic in coalesce(repo.github_repo_topics, []) :
         lower(topic) if contains([
-          "infrastructure-module", 
-          "application-module", 
-          "platform-module", 
+          "infrastructure-module",
+          "application-module",
+          "platform-module",
           "composite-module"
         ], lower(topic))
       ]
@@ -20,8 +20,8 @@ locals {
       for repo in var.repositories : [
         for topic in coalesce(repo.github_repo_topics, []) :
         lower(topic) if contains([
-          "terratest", 
-          "kitchen-terraform", 
+          "terratest",
+          "kitchen-terraform",
           "terraform-compliance",
           "checkov"
         ], lower(topic))
