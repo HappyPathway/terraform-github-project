@@ -1,3 +1,16 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/django-app"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "django_project" {
   source = "../../"
 

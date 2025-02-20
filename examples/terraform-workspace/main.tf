@@ -1,3 +1,16 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/terraform-workspace"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "terraform_workspace" {
   source = "../../"
 

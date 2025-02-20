@@ -1,3 +1,17 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/java-microservices"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
+
 module "java_microservices" {
   source = "../../"
 

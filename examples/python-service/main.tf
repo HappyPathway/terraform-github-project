@@ -1,8 +1,13 @@
+# Description: Example usage of the python-service moduleterraform {
 terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/python-service"
+  }
+
   required_providers {
     github = {
       source  = "integrations/github"
-      version = "~> 5.0"
     }
   }
 }
