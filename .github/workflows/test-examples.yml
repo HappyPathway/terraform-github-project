@@ -61,6 +61,7 @@ jobs:
         working-directory: examples/${{ matrix.example }}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
         run: |
           terraform init
           terraform apply -auto-approve
