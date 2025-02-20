@@ -21,6 +21,9 @@ env:
 permissions:
   contents: read
   pull-requests: read
+  organization-projects: read
+  organization-administration: read
+  admin: read
 
 jobs:
   test-examples:
@@ -63,7 +66,7 @@ jobs:
       - name: Terraform Init and Apply
         working-directory: examples/${{ matrix.example }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           terraform init
           terraform apply -auto-approve
