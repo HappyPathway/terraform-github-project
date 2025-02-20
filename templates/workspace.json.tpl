@@ -4,12 +4,12 @@
     {
       "path": "${folder.path}",
       "name": "${folder.name}"
-    }%{ if !endfor },%{ endif }
+    }%{ if !last },%{ endif }
     %{ endfor }
   ],
   "recommendations": [
     %{ for ext in recommended_extensions }
-    "${ext}"%{ if !endfor },%{ endif }
+    "${ext}"%{ if !last },%{ endif }
     %{ endfor }
   ],
   "settings": {
