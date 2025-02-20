@@ -85,6 +85,7 @@ No requirements.
 | <a name="output_copilot_prompts"></a> [copilot\_prompts](#output\_copilot\_prompts) | Paths to the GitHub Copilot prompt files for each repository |
 | <a name="output_project_repos"></a> [project\_repos](#output\_project\_repos) | Map of all project repositories and their attributes |
 | <a name="output_repositories"></a> [repositories](#output\_repositories) | All project repositories |
+| <a name="output_repository_names"></a> [repository\_names](#output\_repository\_names) | List of all repository names in the project |
 | <a name="output_repository_urls"></a> [repository\_urls](#output\_repository\_urls) | Map of repository names to their various URLs |
 | <a name="output_security_status"></a> [security\_status](#output\_security\_status) | Security configuration status for all repositories |
 | <a name="output_workspace_file_path"></a> [workspace\_file\_path](#output\_workspace\_file\_path) | Path to the VS Code workspace file in the base repository |
