@@ -86,32 +86,7 @@ module "terraform_workspace" {
     extra_files = [
       {
         path    = ".terraform-docs.yml"
-        content = <<-EOT
-formatter: markdown table
-output:
-  file: README.md
-  mode: inject
-  template: |-
-    <!-- BEGIN_TF_DOCS -->
-    {{ .Content }}
-    <!-- END_TF_DOCS -->
-sort:
-  enabled: true
-  by: required
-settings:
-  anchor: true
-  color: true
-  default: true
-  description: false
-  escape: true
-  hide-empty: false
-  html: true
-  indent: 2
-  lockfile: true
-  required: true
-  sensitive: true
-  type: true
-EOT
+        content = file("".terraform-docs.yml")
       }
     ]
   }
