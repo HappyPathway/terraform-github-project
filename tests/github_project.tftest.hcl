@@ -1,10 +1,10 @@
 variables {
-  project_name = "test-project-${formatdate("YYYYMMDD-HHmmss", timestamp())}"
+  project_name = "test-project-static"
   project_prompt = "Test project prompt"
   repo_org = "HappyPathway"
   repositories = [
     {
-      name = "test-repo-${formatdate("YYYYMMDD-HHmmss", timestamp())}"
+      name = "test-repo-1"
       prompt = "Test repo prompt"
       github_repo_description = "Test repository"
       github_repo_topics = ["test", "terraform"]
@@ -13,7 +13,7 @@ variables {
       github_is_private = false
     },
     {
-      name = "test-repo2-${formatdate("YYYYMMDD-HHmmss", timestamp())}"
+      name = "test-repo-2"
       prompt = "Second test repo prompt"
       github_repo_description = "Second test repository"
       github_repo_topics = ["test", "terraform"]
@@ -23,7 +23,7 @@ variables {
     }
   ]
   base_repository = {
-    name = "test-project-base-${formatdate("YYYYMMDD-HHmmss", timestamp())}"
+    name = "test-project-base"
     description = "Base repository for test project"
     topics = ["project-base", "test"]
     create_repo = true
