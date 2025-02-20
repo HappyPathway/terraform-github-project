@@ -15,7 +15,7 @@ module "django_project" {
   source = "../../"
 
   project_name    = "django-ecommerce"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "This is a Django e-commerce application with backend API and frontend components"
 
   repositories = [

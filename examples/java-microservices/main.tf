@@ -16,7 +16,7 @@ module "java_microservices" {
   source = "../../"
 
   project_name    = "retail-platform"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "Java Spring Boot microservices platform for retail operations"
 
   repositories = [

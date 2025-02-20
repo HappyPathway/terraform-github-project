@@ -16,7 +16,7 @@ module "github_project" {
 
   # Required parameters
   project_name    = "my-project"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "This is the main project prompt that will be used across repos"
 
   # Minimal repository configuration
