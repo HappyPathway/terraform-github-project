@@ -21,7 +21,6 @@ env:
 permissions:
   contents: read
   pull-requests: read
-  organization: read
 
 jobs:
   test-examples:
