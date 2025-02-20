@@ -36,7 +36,7 @@ module "project_repos" {
   # File management
   extra_files = try(each.value.extra_files, [])
   managed_extra_files = concat(
-    try(each.value.managed_extra_files, []),
+    coalesce(each.value.managed_extra_files, []),
     try(each.value.prompt, "") != "" ? [
       {
         path    = ".github/prompts/${var.project_name}.prompt.md"

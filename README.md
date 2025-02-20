@@ -1,11 +1,21 @@
-[![Terraform Validation](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml)
+# Terraform GitHub Project Module
 
+[![Terraform Validation](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml)
 
 [![Terraform Doc](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml)
 
-# Terraform GitHub Project Module
+![Terraform GitHub Project Overview](terraform-github-project.png)
+## Quick Start Guide
+This module is designed to help you instantly scaffold entire GitHub project workspaces that are GitHub Copilot-ready. With just one Terraform configuration, you can:
 
-This module helps you manage multiple GitHub repositories as a single project. It creates a main repository (master repo) and any other repositories you need for your project. You can either create new repositories or manage existing ones.
+1. Create a main repository and all your project repositories
+2. Generate a VS Code workspace that links everything together
+3. Set up custom prompt files that help GitHub Copilot understand your entire project architecture
+4. Pre-seed repositories with `.copilot-instructions.md` files containing project-specific coding guidelines
+
+The real power comes when you open the workspace in VS Code - GitHub Copilot immediately understands your entire project structure and can help generate code across all repositories following your project's standards.
+
+For example, you can tell Copilot "implement the API endpoints described in the project prompt" and it will understand the context from your prompt files and generate code following your project's patterns.
 
 ## What This Module Does
 
