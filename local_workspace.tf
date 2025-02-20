@@ -79,7 +79,7 @@ locals {
     flatten([
       for repo in var.repositories :
       flatten([
-        for topic in coalesce(repo.topics, []) :
+        for topic in coalesce(repo.github_repo_topics, []) :
         try(local.topic_extension_mappings[lower(topic)], [])
       ])
     ])
