@@ -88,21 +88,21 @@ resource "github_repository_file" "base_repo_codeowners" {
 
 # Add branch protection after files are created
 resource "github_branch_protection" "base_repo" {
-  count = local.base_repository.enable_branch_protection ? 1 : 0
+  count = try(local.base_repository.enable_branch_protection, true) ? 1 : 0
 
   repository_id = module.base_repo.github_repo.node_id
   pattern       = module.base_repo.default_branch
 
-  enforce_admins          = local.base_repository.branch_protection.enforce_admins
-  required_linear_history = local.base_repository.branch_protection.required_linear_history
+  enforce_admins          = try(local.base_repository.branch_protection.enforce_admins, true)
+  required_linear_history = try(local.base_repository.branch_protection.required_linear_history, true)
   allows_force_pushes     = try(local.base_repository.branch_protection.allow_force_pushes, false)
   allows_deletions        = try(local.base_repository.branch_protection.allow_deletions, false)
   require_signed_commits  = try(local.base_repository.require_signed_commits, false)
 
   required_pull_request_reviews {
-    dismiss_stale_reviews           = local.base_repository.branch_protection.dismiss_stale_reviews
-    require_code_owner_reviews      = local.base_repository.branch_protection.require_code_owner_reviews
-    required_approving_review_count = local.base_repository.branch_protection.required_approving_review_count
+    dismiss_stale_reviews           = try(local.base_repository.branch_protection.dismiss_stale_reviews, true)
+    require_code_owner_reviews      = try(local.base_repository.branch_protection.require_code_owner_reviews, true)
+    required_approving_review_count = try(local.base_repository.branch_protection.required_approving_review_count, 1)
   }
 
   dynamic "required_status_checks" {

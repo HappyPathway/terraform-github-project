@@ -6,6 +6,7 @@ run "development_environment_configuration" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
@@ -56,6 +57,7 @@ run "validate_devcontainer_files" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
@@ -103,6 +105,7 @@ run "validate_workspace_config" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
@@ -135,7 +138,7 @@ run "validate_workspace_config" {
   }
 
   assert {
-    condition = local_file.workspace_config.filename == "${var.project_name}.code-workspace"
+    condition = github_repository_file.workspace_config[0].file == "${var.project_name}.code-workspace"
     error_message = "Workspace configuration file was not created with correct name"
   }
 }
@@ -146,7 +149,7 @@ run "development_features_disabled_by_default" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
-
+    project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
@@ -174,11 +177,6 @@ run "development_features_disabled_by_default" {
     condition     = length(github_repository_file.codespaces) == 0
     error_message = "Codespaces configuration should not be created when feature is not explicitly enabled"
   }
-
-  assert {
-    condition     = length(local_file.workspace_config) == 0
-    error_message = "VS Code workspace file should not be created when feature is not explicitly enabled"
-  }
 }
 
 run "workspace_file_always_created" {
@@ -187,7 +185,7 @@ run "workspace_file_always_created" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
-
+    project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
@@ -223,7 +221,7 @@ run "workspace_file_settings" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
-
+    project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"

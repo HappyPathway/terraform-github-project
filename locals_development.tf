@@ -43,14 +43,47 @@ locals {
     }
   }
 
-  # Default VS Code workspace settings when enabled
+  # Default VS Code workspace settings - generic for all developers
   default_vscode_settings = {
-    "editor.formatOnSave" : true,
-    "files.trimTrailingWhitespace" : true,
-    "files.insertFinalNewline" : true,
-    "editor.rulers" : [80, 100],
-    "files.encoding" : "utf8",
-    "files.eol" : "\n"
+    # Basic editor settings
+    "editor.formatOnSave": true,
+    "editor.rulers": [80, 120],
+    "editor.detectIndentation": true,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "off",
+    
+    # Files and search
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.encoding": "utf8",
+    "files.eol": "\n",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/dist": true,
+      "**/coverage": true
+    },
+
+    # Git settings
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+
+    # Terminal settings
+    "terminal.integrated.scrollback": 5000,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+
+    # Explorer settings
+    "explorer.confirmDelete": true,
+    "explorer.confirmDragAndDrop": true,
+
+    # Workbench settings
+    "workbench.editor.enablePreview": false,
+    "workbench.startupEditor": "none",
+    "workbench.colorTheme": "Default Dark Modern"
   }
 
   # Default Codespaces configuration
@@ -64,42 +97,22 @@ locals {
 
   # Computed development container configuration (only when enabled)
   effective_devcontainer = var.development_container != null ? merge(
-    {
-      base_image         = "ubuntu:22.04"
-      install_tools      = ["git", "curl", "make"]
-      vs_code_extensions = ["github.copilot"]
-      env_vars = {
-        ENVIRONMENT = "development"
-      }
-      ports                = []
-      post_create_commands = []
-    },
+    local.default_devcontainer,
+    try(local.language_devcontainers[var.development_container.language], {}),
     var.development_container
   ) : null
 
   # Computed VS Code workspace configuration (only when enabled)
-  effective_vscode = var.vs_code_workspace != null ? {
-    settings = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
-    extensions = {
-      recommended = distinct(concat(
-        try(var.vs_code_workspace.extensions.recommended, []),
-        ["github.copilot"]
-      ))
-      required = try(var.vs_code_workspace.extensions.required, [])
-    }
-    tasks                 = try(var.vs_code_workspace.tasks, [])
+  effective_vscode = {
+    settings    = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
+    extensions  = try(var.vs_code_workspace.extensions, { recommended = [], required = [] })
+    tasks       = try(var.vs_code_workspace.tasks, [])
     launch_configurations = try(var.vs_code_workspace.launch_configurations, [])
-  } : null
+  }
 
   # Computed Codespaces configuration (only when enabled)
   effective_codespaces = var.codespaces != null ? merge(
-    {
-      machine_type     = "medium"
-      retention_days   = 30
-      prebuild_enabled = false
-      env_vars         = {}
-      secrets          = []
-    },
+    local.default_codespaces,
     var.codespaces
   ) : null
 }

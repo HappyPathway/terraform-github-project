@@ -1,8 +1,7 @@
 resource "github_repository_file" "devcontainer" {
   for_each = var.development_container != null ? { for repo in var.repositories : repo.name => repo } : {}
-
-  repository = github_repository.project_repos[each.key].name
-  branch     = github_repository.project_repos[each.key].default_branch
+  repository = module.project_repos[each.key].github_repo.name
+  branch     = module.project_repos[each.key].default_branch
   file       = ".devcontainer/devcontainer.json"
   content = jsonencode({
     name  = "${each.key}-dev"
@@ -18,7 +17,7 @@ resource "github_repository_file" "devcontainer" {
     remoteEnv         = local.effective_devcontainer.env_vars
     postCreateCommand = join(" && ", local.effective_devcontainer.post_create_commands)
     features = {
-      ghcr.io / devcontainers / features / docker-in-docker = {
+      "ghcr.io/devcontainers/features/docker-in-docker" = {
         version = "latest"
         moby    = true
       }
@@ -26,6 +25,7 @@ resource "github_repository_file" "devcontainer" {
   })
   commit_message      = "Add DevContainer configuration"
   overwrite_on_create = true
+  depends_on = [module.project_repos]
 }
 
 resource "github_repository_file" "docker_compose" {
@@ -33,9 +33,8 @@ resource "github_repository_file" "docker_compose" {
     for repo in var.repositories : repo.name => repo
     if try(local.effective_devcontainer.docker_compose.enabled, false)
   } : {}
-
-  repository = github_repository.project_repos[each.key].name
-  branch     = github_repository.project_repos[each.key].default_branch
+  repository = module.project_repos[each.key].github_repo.name
+  branch     = module.project_repos[each.key].default_branch
   file       = ".devcontainer/docker-compose.yml"
   content = yamlencode({
     version  = "3.8"
@@ -43,20 +42,20 @@ resource "github_repository_file" "docker_compose" {
   })
   commit_message      = "Add Docker Compose configuration for development"
   overwrite_on_create = true
+  depends_on = [module.project_repos]
 }
 
 resource "github_repository_file" "workspace_config" {
-  count = 1 # Always create the workspace file
-
-  repository = var.base_repository.name
-  branch     = coalesce(var.base_repository.default_branch, "main")
+  count      = 1 # Always create the workspace file
+  repository = module.base_repo.github_repo.name
+  branch     = module.base_repo.default_branch
   file       = "${var.project_name}.code-workspace"
   content = jsonencode({
     folders = concat(
       [
         {
-          name = var.base_repository.name
-          path = "./${var.base_repository.name}"
+          name = var.project_name
+          path = "./${var.project_name}"
         }
       ],
       [
@@ -82,13 +81,13 @@ resource "github_repository_file" "workspace_config" {
   })
   commit_message      = "Update VS Code workspace configuration"
   overwrite_on_create = true
+  depends_on = [module.base_repo]
 }
 
 resource "github_repository_file" "codespaces" {
   for_each = var.codespaces != null ? { for repo in var.repositories : repo.name => repo } : {}
-
-  repository = github_repository.project_repos[each.key].name
-  branch     = github_repository.project_repos[each.key].default_branch
+  repository = module.project_repos[each.key].github_repo.name
+  branch     = module.project_repos[each.key].default_branch
   file       = ".devcontainer/codespaces.json"
   content = jsonencode({
     machine = {
@@ -121,4 +120,5 @@ resource "github_repository_file" "codespaces" {
   })
   commit_message      = "Add GitHub Codespaces configuration"
   overwrite_on_create = true
+  depends_on = [module.project_repos]
 }

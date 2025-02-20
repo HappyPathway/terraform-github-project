@@ -75,9 +75,9 @@ output "project_repos" {
 output "workspace_file_path" {
   description = "Path to the VS Code workspace file in the base repository"
   value = {
-    repository = var.base_repository.name
+    repository = module.base_repo.github_repo.name
     path       = "${var.project_name}.code-workspace"
-    html_url   = "https://github.com/${var.repo_org}/${var.base_repository.name}/blob/${coalesce(var.base_repository.default_branch, "main")}/${var.project_name}.code-workspace"
+    html_url   = "https://github.com/${var.repo_org}/${module.base_repo.github_repo.name}/blob/${module.base_repo.default_branch}/${var.project_name}.code-workspace"
   }
 }
 
@@ -153,4 +153,12 @@ output "base_repository_files" {
     }
     codeowners = try(github_repository_file.base_repo_codeowners[0].content, null)
   }
+}
+
+output "repository_names" {
+  description = "List of all repository names in the project"
+  value = merge(
+    { (var.project_name) = module.base_repo.github_repo.name },
+    { for name, repo in module.project_repos : name => repo.github_repo.name }
+  )
 }

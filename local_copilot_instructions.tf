@@ -7,15 +7,15 @@ locals {
 
     ## Repository Structure
     This is a ${length(var.repositories)}-tier application with the following components:
-    ${join("\n", [for repo in var.repositories : "- ${repo.name}: ${repo.github_repo_description}"])}
+    ${join("\n", [for repo in var.repositories : "- ${repo.name}: ${try(repo.description, "No description provided")}"])}
 
     ## Repository-Specific Guidelines
     ${join("\n\n", [for repo in var.repositories : <<-REPO
       ### ${repo.name}
-      ${repo.prompt}
+      ${coalesce(try(repo.description, null), "No specific guidelines provided")}
       
       Technical Stack:
-      ${join("\n", formatlist("- %s", repo.github_repo_topics))}
+      ${join("\n", formatlist("- %s", try(repo.github_repo_topics, [])))}
     REPO
 ])}
 

@@ -1,6 +1,7 @@
 # Project repositories configuration
 locals {
   project_repositories = { for repo in var.repositories : repo.name => repo }
+  default_prompt_content = "No specific guidelines provided"
 }
 
 module "project_repos" {
@@ -37,12 +38,16 @@ module "project_repos" {
   extra_files = try(each.value.extra_files, [])
   managed_extra_files = concat(
     coalesce(each.value.managed_extra_files, []),
-    try(each.value.prompt, "") != "" ? [
+    [
       {
-        path    = ".github/prompts/${var.project_name}.prompt.md"
-        content = each.value.prompt
+        path    = "${each.key}-${var.project_name}-prompt.md"
+        content = coalesce(
+          try(each.value.prompt, null),
+          try(each.value.description, null),
+          "${local.default_prompt_content} for ${each.key}"
+        )
       }
-    ] : []
+    ]
   )
 
   # Teams and access control
