@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
 
-# Create project directory
-mkdir -p ${project_name}
-cd ${project_name}
-
 echo "Initializing project ${project_name}..."
 
 # Clone repositories
