@@ -46,44 +46,44 @@ locals {
   # Default VS Code workspace settings - generic for all developers
   default_vscode_settings = {
     # Basic editor settings
-    "editor.formatOnSave": true,
-    "editor.rulers": [80, 120],
-    "editor.detectIndentation": true,
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true,
-    "editor.wordWrap": "off",
-    
+    "editor.formatOnSave" : true,
+    "editor.rulers" : [80, 120],
+    "editor.detectIndentation" : true,
+    "editor.tabSize" : 2,
+    "editor.insertSpaces" : true,
+    "editor.wordWrap" : "off",
+
     # Files and search
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "files.encoding": "utf8",
-    "files.eol": "\n",
-    "search.exclude": {
-      "**/node_modules": true,
-      "**/bower_components": true,
-      "**/*.code-search": true,
-      "**/dist": true,
-      "**/coverage": true
+    "files.trimTrailingWhitespace" : true,
+    "files.insertFinalNewline" : true,
+    "files.trimFinalNewlines" : true,
+    "files.encoding" : "utf8",
+    "files.eol" : "\n",
+    "search.exclude" : {
+      "**/node_modules" : true,
+      "**/bower_components" : true,
+      "**/*.code-search" : true,
+      "**/dist" : true,
+      "**/coverage" : true
     },
 
     # Git settings
-    "git.enableSmartCommit": true,
-    "git.confirmSync": false,
-    "git.autofetch": true,
+    "git.enableSmartCommit" : true,
+    "git.confirmSync" : false,
+    "git.autofetch" : true,
 
     # Terminal settings
-    "terminal.integrated.scrollback": 5000,
-    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "terminal.integrated.scrollback" : 5000,
+    "terminal.integrated.enableMultiLinePasteWarning" : false,
 
     # Explorer settings
-    "explorer.confirmDelete": true,
-    "explorer.confirmDragAndDrop": true,
+    "explorer.confirmDelete" : true,
+    "explorer.confirmDragAndDrop" : true,
 
     # Workbench settings
-    "workbench.editor.enablePreview": false,
-    "workbench.startupEditor": "none",
-    "workbench.colorTheme": "Default Dark Modern"
+    "workbench.editor.enablePreview" : false,
+    "workbench.startupEditor" : "none",
+    "workbench.colorTheme" : "Default Dark Modern"
   }
 
   # Default Codespaces configuration
@@ -104,9 +104,9 @@ locals {
 
   # Computed VS Code workspace configuration (only when enabled)
   effective_vscode = {
-    settings    = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
-    extensions  = try(var.vs_code_workspace.extensions, { recommended = [], required = [] })
-    tasks       = try(var.vs_code_workspace.tasks, [])
+    settings              = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
+    extensions            = try(var.vs_code_workspace.extensions, { recommended = [], required = [] })
+    tasks                 = try(var.vs_code_workspace.tasks, [])
     launch_configurations = try(var.vs_code_workspace.launch_configurations, [])
   }
 

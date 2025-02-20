@@ -1,5 +1,5 @@
 resource "github_repository_file" "devcontainer" {
-  for_each = var.development_container != null ? { for repo in var.repositories : repo.name => repo } : {}
+  for_each   = var.development_container != null ? { for repo in var.repositories : repo.name => repo } : {}
   repository = module.project_repos[each.key].github_repo.name
   branch     = module.project_repos[each.key].default_branch
   file       = ".devcontainer/devcontainer.json"
@@ -25,7 +25,7 @@ resource "github_repository_file" "devcontainer" {
   })
   commit_message      = "Add DevContainer configuration"
   overwrite_on_create = true
-  depends_on = [module.project_repos]
+  depends_on          = [module.project_repos]
 }
 
 resource "github_repository_file" "docker_compose" {
@@ -42,7 +42,7 @@ resource "github_repository_file" "docker_compose" {
   })
   commit_message      = "Add Docker Compose configuration for development"
   overwrite_on_create = true
-  depends_on = [module.project_repos]
+  depends_on          = [module.project_repos]
 }
 
 resource "github_repository_file" "workspace_config" {
@@ -81,11 +81,11 @@ resource "github_repository_file" "workspace_config" {
   })
   commit_message      = "Update VS Code workspace configuration"
   overwrite_on_create = true
-  depends_on = [module.base_repo]
+  depends_on          = [module.base_repo]
 }
 
 resource "github_repository_file" "codespaces" {
-  for_each = var.codespaces != null ? { for repo in var.repositories : repo.name => repo } : {}
+  for_each   = var.codespaces != null ? { for repo in var.repositories : repo.name => repo } : {}
   repository = module.project_repos[each.key].github_repo.name
   branch     = module.project_repos[each.key].default_branch
   file       = ".devcontainer/codespaces.json"
@@ -120,5 +120,5 @@ resource "github_repository_file" "codespaces" {
   })
   commit_message      = "Add GitHub Codespaces configuration"
   overwrite_on_create = true
-  depends_on = [module.project_repos]
+  depends_on          = [module.project_repos]
 }

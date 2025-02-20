@@ -1,6 +1,6 @@
 # Project repositories configuration
 locals {
-  project_repositories = { for repo in var.repositories : repo.name => repo }
+  project_repositories   = { for repo in var.repositories : repo.name => repo }
   default_prompt_content = "No specific guidelines provided"
 }
 
@@ -40,7 +40,7 @@ module "project_repos" {
     coalesce(each.value.managed_extra_files, []),
     [
       {
-        path    = "${each.key}-${var.project_name}-prompt.md"
+        path = "${each.key}-${var.project_name}-prompt.md"
         content = coalesce(
           try(each.value.prompt, null),
           try(each.value.description, null),
