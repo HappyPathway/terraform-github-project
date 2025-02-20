@@ -13,10 +13,6 @@ for repo in ${jsonencode(repositories)}; do
   git clone "git@github.com:${repo_org}/$repo.git"
 done
 
-# Generate VS Code workspace file
-echo "Setting up VS Code workspace..."
-cp "./${base_repo}/workspace.json" "./${project_name}.code-workspace"
-
 # Configure git settings for each repository
 echo "Configuring git settings..."
 for dir in */; do
