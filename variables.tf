@@ -1,16 +1,31 @@
 variable "project_name" {
   description = "Name of the project. Will be used as the base repository name."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.project_name))
+    error_message = "Project name must contain only alphanumeric characters, underscores, and hyphens."
+  }
 }
 
 variable "repo_org" {
   description = "GitHub organization name"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.repo_org))
+    error_message = "Organization name must contain only alphanumeric characters and hyphens."
+  }
 }
 
 variable "project_prompt" {
   description = "Content for the project's prompt file"
   type        = string
+
+  validation {
+    condition     = length(var.project_prompt) > 0
+    error_message = "Project prompt cannot be empty."
+  }
 }
 
 variable "copilot_instructions" {
@@ -96,7 +111,7 @@ variable "repositories" {
         status = string
       }))
     }))
-    prompt = string
+    prompt = optional(string)
   }))
   default = []
 }
