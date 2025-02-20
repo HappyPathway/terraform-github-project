@@ -1,15 +1,15 @@
 {
   "folders": [
-    %{ for folder in folders }
+    %{ for i, folder in folders }
     {
       "path": "${folder.path}",
       "name": "${folder.name}"
-    }%{ if !last },%{ endif }
+    }%{ if i < length(folders) - 1 },%{ endif }
     %{ endfor }
   ],
   "recommendations": [
-    %{ for ext in recommended_extensions }
-    "${ext}"%{ if !last },%{ endif }
+    %{ for i, ext in recommended_extensions }
+    "${ext}"%{ if i < length(recommended_extensions) - 1 },%{ endif }
     %{ endfor }
   ],
   "settings": {
