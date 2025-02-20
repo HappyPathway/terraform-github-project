@@ -4,7 +4,7 @@ locals {
     repo_org     = var.repo_org
     base_repo    = try(var.repositories[0].name, "")
     repositories = [for repo in var.repositories : repo.name]
-    custom_script = coalesce(try(var.initialization_script.content, ""), "")
+    custom_script = try(var.initialization_script.content, "")
   }
 
   # Generate workspace file content
