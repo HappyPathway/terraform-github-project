@@ -12,7 +12,7 @@ module "python_project" {
 
   project_name = "python-service"
   repo_org     = "example-org"
-
+  project_prompt = "Python microservice project with development environment configuration"
   base_repository = {
     name        = "python-service"
     description = "Python microservice project with development environment configuration"

@@ -64,11 +64,3 @@ jobs:
         run: |
           terraform init
           terraform apply -auto-approve
-
-      - name: Terraform Destroy
-        if: always()  # Run even if previous steps failed
-        working-directory: examples/${{ matrix.example }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          terraform destroy -auto-approve
