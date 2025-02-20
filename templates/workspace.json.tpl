@@ -1,6 +1,17 @@
 {
-  "folders": ${jsonencode(folders)},
-  "recommendations": ${jsonencode(recommended_extensions)},
+  "folders": [
+    %{ for folder in folders }
+    {
+      "path": "${folder.path}",
+      "name": "${folder.name}"
+    }%{ if !endfor },%{ endif }
+    %{ endfor }
+  ],
+  "recommendations": [
+    %{ for ext in recommended_extensions }
+    "${ext}"%{ if !endfor },%{ endif }
+    %{ endfor }
+  ],
   "settings": {
     "files.exclude": {
       "**/.git": true,
