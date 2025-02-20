@@ -10,9 +10,9 @@ output "base_repo" {
     http_url    = module.base_repo.github_repo.http_clone_url
     git_url     = module.base_repo.github_repo.git_clone_url
     visibility  = module.base_repo.github_repo.visibility
-    
+
     # Repository settings
-    topics                  = module.base_repo.github_repo.topics
+    topics                 = module.base_repo.github_repo.topics
     has_issues             = module.base_repo.github_repo.has_issues
     has_projects           = module.base_repo.github_repo.has_projects
     has_wiki               = module.base_repo.github_repo.has_wiki
@@ -22,13 +22,13 @@ output "base_repo" {
     allow_rebase_merge     = module.base_repo.github_repo.allow_rebase_merge
     allow_auto_merge       = module.base_repo.github_repo.allow_auto_merge
     delete_branch_on_merge = module.base_repo.github_repo.delete_branch_on_merge
-    
+
     # Additional metadata
     default_branch = module.base_repo.github_repo.default_branch
-    archived      = module.base_repo.github_repo.archived
-    homepage_url  = module.base_repo.github_repo.homepage_url
-    node_id      = module.base_repo.github_repo.node_id
-    
+    archived       = module.base_repo.github_repo.archived
+    homepage_url   = module.base_repo.github_repo.homepage_url
+    node_id        = module.base_repo.github_repo.node_id
+
     # Git details
     template = module.base_repo.github_repo.template
   }
@@ -47,9 +47,9 @@ output "project_repos" {
       http_url    = repo.github_repo.http_clone_url
       git_url     = repo.github_repo.git_clone_url
       visibility  = repo.github_repo.visibility
-      
+
       # Repository settings
-      topics                  = repo.github_repo.topics
+      topics                 = repo.github_repo.topics
       has_issues             = repo.github_repo.has_issues
       has_projects           = repo.github_repo.has_projects
       has_wiki               = repo.github_repo.has_wiki
@@ -59,13 +59,13 @@ output "project_repos" {
       allow_rebase_merge     = repo.github_repo.allow_rebase_merge
       allow_auto_merge       = repo.github_repo.allow_auto_merge
       delete_branch_on_merge = repo.github_repo.delete_branch_on_merge
-      
+
       # Additional metadata
       default_branch = repo.github_repo.default_branch
-      archived      = repo.github_repo.archived
-      homepage_url  = repo.github_repo.homepage_url
-      node_id      = repo.github_repo.node_id
-      
+      archived       = repo.github_repo.archived
+      homepage_url   = repo.github_repo.homepage_url
+      node_id        = repo.github_repo.node_id
+
       # Git details
       template = repo.github_repo.template
     }
@@ -76,8 +76,8 @@ output "workspace_file_path" {
   description = "Path to the VS Code workspace file in the base repository"
   value = {
     repository = var.base_repository.name
-    path      = "${var.project_name}.code-workspace"
-    html_url  = "https://github.com/${var.repo_org}/${var.base_repository.name}/blob/${coalesce(var.base_repository.default_branch, "main")}/${var.project_name}.code-workspace"
+    path       = "${var.project_name}.code-workspace"
+    html_url   = "https://github.com/${var.repo_org}/${var.base_repository.name}/blob/${coalesce(var.base_repository.default_branch, "main")}/${var.project_name}.code-workspace"
   }
 }
 
@@ -103,17 +103,17 @@ output "repository_urls" {
   description = "Map of repository names to their various URLs"
   value = merge(
     { (var.project_name) = {
-      html_url    = module.base_repo.github_repo.html_url
-      ssh_url     = module.base_repo.ssh_clone_url
-      http_url    = module.base_repo.github_repo.http_clone_url
-      git_url     = module.base_repo.github_repo.git_clone_url
-    }},
+      html_url = module.base_repo.github_repo.html_url
+      ssh_url  = module.base_repo.ssh_clone_url
+      http_url = module.base_repo.github_repo.http_clone_url
+      git_url  = module.base_repo.github_repo.git_clone_url
+    } },
     {
       for name, repo in module.project_repos : name => {
-        html_url    = repo.github_repo.html_url
-        ssh_url     = repo.ssh_clone_url
-        http_url    = repo.github_repo.http_clone_url
-        git_url     = repo.github_repo.git_clone_url
+        html_url = repo.github_repo.html_url
+        ssh_url  = repo.ssh_clone_url
+        http_url = repo.github_repo.http_clone_url
+        git_url  = repo.github_repo.git_clone_url
       }
     }
   )
@@ -124,7 +124,7 @@ output "security_status" {
   value = merge(
     { (var.project_name) = {
       private = module.base_repo.github_repo.visibility == "private"
-    }},
+    } },
     {
       for name, repo in module.project_repos : name => {
         private = repo.github_repo.visibility == "private"

@@ -4,32 +4,32 @@ resource "github_repository_file" "devcontainer" {
   repository = github_repository.project_repos[each.key].name
   branch     = github_repository.project_repos[each.key].default_branch
   file       = ".devcontainer/devcontainer.json"
-  content    = jsonencode({
-    name = "${each.key}-dev"
+  content = jsonencode({
+    name  = "${each.key}-dev"
     image = local.effective_devcontainer.base_image
     customizations = {
       vscode = {
         extensions = local.effective_devcontainer.vs_code_extensions
-        settings = local.effective_vscode.settings
+        settings   = local.effective_vscode.settings
       }
     }
-    forwardPorts = local.effective_devcontainer.ports
-    runArgs = [for port in local.effective_devcontainer.ports : "-p ${port}:${port}"]
-    remoteEnv = local.effective_devcontainer.env_vars
+    forwardPorts      = local.effective_devcontainer.ports
+    runArgs           = [for port in local.effective_devcontainer.ports : "-p ${port}:${port}"]
+    remoteEnv         = local.effective_devcontainer.env_vars
     postCreateCommand = join(" && ", local.effective_devcontainer.post_create_commands)
     features = {
-      ghcr.io/devcontainers/features/docker-in-docker = {
+      ghcr.io / devcontainers / features / docker-in-docker = {
         version = "latest"
-        moby = true
+        moby    = true
       }
     }
   })
-  commit_message = "Add DevContainer configuration"
+  commit_message      = "Add DevContainer configuration"
   overwrite_on_create = true
 }
 
 resource "github_repository_file" "docker_compose" {
-  for_each = var.development_container != null ? { 
+  for_each = var.development_container != null ? {
     for repo in var.repositories : repo.name => repo
     if try(local.effective_devcontainer.docker_compose.enabled, false)
   } : {}
@@ -37,21 +37,21 @@ resource "github_repository_file" "docker_compose" {
   repository = github_repository.project_repos[each.key].name
   branch     = github_repository.project_repos[each.key].default_branch
   file       = ".devcontainer/docker-compose.yml"
-  content    = yamlencode({
-    version = "3.8"
+  content = yamlencode({
+    version  = "3.8"
     services = local.effective_devcontainer.docker_compose.services
   })
-  commit_message = "Add Docker Compose configuration for development"
+  commit_message      = "Add Docker Compose configuration for development"
   overwrite_on_create = true
 }
 
 resource "github_repository_file" "workspace_config" {
-  count = 1  # Always create the workspace file
+  count = 1 # Always create the workspace file
 
   repository = var.base_repository.name
   branch     = coalesce(var.base_repository.default_branch, "main")
   file       = "${var.project_name}.code-workspace"
-  content    = jsonencode({
+  content = jsonencode({
     folders = concat(
       [
         {
@@ -76,11 +76,11 @@ resource "github_repository_file" "workspace_config" {
     }
     tasks = try(local.effective_vscode.tasks, [])
     launch = {
-      version = "0.2.0"
+      version        = "0.2.0"
       configurations = try(local.effective_vscode.launch_configurations, [])
     }
   })
-  commit_message = "Update VS Code workspace configuration"
+  commit_message      = "Update VS Code workspace configuration"
   overwrite_on_create = true
 }
 
@@ -90,7 +90,7 @@ resource "github_repository_file" "codespaces" {
   repository = github_repository.project_repos[each.key].name
   branch     = github_repository.project_repos[each.key].default_branch
   file       = ".devcontainer/codespaces.json"
-  content    = jsonencode({
+  content = jsonencode({
     machine = {
       type = local.effective_codespaces.machine_type
     }
@@ -115,10 +115,10 @@ resource "github_repository_file" "codespaces" {
       }
     }
     gitConfig = {
-      "pull.rebase" = "true"
+      "pull.rebase"   = "true"
       "core.autocrlf" = "input"
     }
   })
-  commit_message = "Add GitHub Codespaces configuration"
+  commit_message      = "Add GitHub Codespaces configuration"
   overwrite_on_create = true
 }

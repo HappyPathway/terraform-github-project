@@ -17,7 +17,7 @@ locals {
       Technical Stack:
       ${join("\n", formatlist("- %s", repo.github_repo_topics))}
     REPO
-    ])}
+])}
 
     ## Derived Coding Standards
     The following standards have been automatically derived from the project configuration:
@@ -33,7 +33,7 @@ locals {
        ${local.repo_analysis.review_requirements.required ? <<-EOT
          ${local.repo_analysis.collaboration.pr_bypass_allowed ? "- Some users/teams can bypass PR requirements" : ""}
        EOT
-       : "- Pull request reviews are optional"}
+: "- Pull request reviews are optional"}
 
     3. Git Workflow:
        - Preferred merge strategies: ${join(", ", compact(local.repo_analysis.merge_strategies))}
@@ -72,14 +72,14 @@ locals {
        - Primary languages: ${join(", ", local.development_standards.languages)}
        - Follow language-specific best practices and style guides
     EOT
-    : ""}
+: ""}
 
     ${length(local.development_standards.frameworks) > 0 ? <<-EOT
     2. Frameworks:
        - Used frameworks: ${join(", ", local.development_standards.frameworks)}
        - Follow framework-specific conventions and documentation
     EOT
-    : ""}
+: ""}
 
     3. Testing Requirements:
        ${local.development_standards.testing_required ? <<-EOT
@@ -87,7 +87,7 @@ locals {
        - Tests must pass before merging
        - Follow testing best practices for each language/framework
        EOT
-       : "- Testing requirements not specified"}
+: "- Testing requirements not specified"}
 
     4. CI/CD:
        - Using ${local.development_standards.ci_tool}
@@ -101,7 +101,7 @@ locals {
        - Use project-specific linting rules
        - Fix all linting issues before committing
        EOT
-       : "- No specific linting requirements defined"}
+: "- No specific linting requirements defined"}
        
     2. Code Formatting:
        ${length(local.code_quality.formatting_tools) > 0 ? <<-EOT
@@ -109,7 +109,7 @@ locals {
        - Format code before committing
        - Follow team-wide formatting conventions
        EOT
-       : "- Follow language-specific formatting conventions"}
+: "- Follow language-specific formatting conventions"}
 
     3. Type Safety:
        ${local.code_quality.type_safety ? <<-EOT
@@ -117,7 +117,7 @@ locals {
        - Type definitions must be complete and accurate
        - Avoid using 'any' or equivalent loose types
        EOT
-       : "- Follow language-specific type safety practices"}
+: "- Follow language-specific type safety practices"}
 
     4. Documentation:
        ${local.code_quality.documentation_required ? <<-EOT
@@ -126,7 +126,7 @@ locals {
        - Include examples in documentation
        - Document complex logic and important decisions
        EOT
-       : "- Document important changes and features"}
+: "- Document important changes and features"}
 
     ## Infrastructure as Code Standards
     ${length(local.infrastructure_patterns.iac_tools) > 0 ? <<-EOT
@@ -135,7 +135,7 @@ locals {
        - Follow tool-specific best practices and style guides
        ${local.infrastructure_patterns.uses_modules ? "- Use modular design patterns" : ""}
     EOT
-    : ""}
+: ""}
 
     ${length(local.infrastructure_patterns.cloud_providers) > 0 ? <<-EOT
     2. Cloud Providers:
@@ -143,7 +143,7 @@ locals {
        - Follow cloud-specific security best practices
        - Use provider-recommended patterns
     EOT
-    : ""}
+: ""}
 
     ${local.infrastructure_patterns.has_terraform ? <<-EOT
     3. Terraform Standards:
@@ -154,7 +154,7 @@ locals {
        - Use workspaces appropriately
        - Follow standard module structure
     EOT
-    : ""}
+: ""}
 
     ${local.infrastructure_patterns.has_kubernetes ? <<-EOT
     4. Kubernetes Standards:
@@ -165,7 +165,7 @@ locals {
        - Use appropriate security contexts
        - Version all manifests
     EOT
-    : ""}
+: ""}
 
     ${local.infrastructure_patterns.deployment_environment ? <<-EOT
     5. Environment Management:
@@ -175,7 +175,7 @@ locals {
        - Include rollback procedures
        - Test infrastructure changes
     EOT
-    : ""}
+: ""}
 
     6. Infrastructure Security:
        - Follow principle of least privilege
@@ -193,7 +193,7 @@ locals {
        - Follow key management best practices
        - Document encryption procedures
     EOT
-    : ""}
+: ""}
 
     ${length(local.compliance_patterns.compliance_frameworks) > 0 ? <<-EOT
     2. Compliance Requirements:
@@ -202,7 +202,7 @@ locals {
        - Maintain compliance documentation
        - Regular compliance audits
     EOT
-    : ""}
+: ""}
 
     ${local.compliance_patterns.data_protection.audit_logging ? <<-EOT
     3. Audit and Logging:
@@ -211,7 +211,7 @@ locals {
        - Secure log storage
        - Regular log reviews
     EOT
-    : ""}
+: ""}
 
     ${local.compliance_patterns.data_protection.backup_configured ? <<-EOT
     4. Backup and Recovery:
@@ -220,7 +220,7 @@ locals {
        - Document backup strategy
        - Verify backup integrity
     EOT
-    : ""}
+: ""}
 
     ${local.compliance_patterns.monitoring_required ? <<-EOT
     5. Monitoring and Alerting:
@@ -229,7 +229,7 @@ locals {
        - Create response procedures
        - Regular monitoring review
     EOT
-    : ""}
+: ""}
 
     ## Deployment and Release Management
     ${length(local.deployment_patterns.strategies) > 0 ? <<-EOT
@@ -239,7 +239,7 @@ locals {
        - Include rollback plans
        - Test deployment processes
     EOT
-    : ""}
+: ""}
 
     ${length(local.deployment_patterns.ci_cd_tools) > 0 ? <<-EOT
     2. CI/CD Pipeline:
@@ -248,7 +248,7 @@ locals {
        - Include automated tests
        - Define quality gates
     EOT
-    : ""}
+: ""}
 
     ${local.deployment_patterns.uses_gitops ? <<-EOT
     3. GitOps Practices:
@@ -257,7 +257,7 @@ locals {
        - Automate reconciliation
        - Document drift detection
     EOT
-    : ""}
+: ""}
 
     ${local.deployment_patterns.feature_flags ? <<-EOT
     4. Feature Management:
@@ -266,7 +266,7 @@ locals {
        - Clean up unused flags
        - Test flag combinations
     EOT
-    : ""}
+: ""}
 
     5. Release Process:
        - Follow semantic versioning
@@ -315,7 +315,7 @@ locals {
        - Document breaking changes
        - Include upgrade guides
     EOT
-    : ""}
+: ""}
 
     ## Secrets Management and Security Tools
     ${length(local.security_tooling.secret_managers) > 0 ? <<-EOT
@@ -325,7 +325,7 @@ locals {
        - Use appropriate authentication methods
        - Implement secret rotation
     EOT
-    : ""}
+: ""}
 
     ${local.security_tooling.vault_integration ? <<-EOT
     2. HashiCorp Vault Integration:
@@ -337,7 +337,7 @@ locals {
        - Use dynamic secrets where possible
        - Implement proper backup procedures
     EOT
-    : ""}
+: ""}
 
     ${local.security_tooling.cloud_key_management.aws ? <<-EOT
     3. AWS Key Management:
@@ -348,7 +348,7 @@ locals {
        - Follow AWS security best practices
        - Enable automatic key rotation
     EOT
-    : ""}
+: ""}
 
     ${local.security_tooling.cloud_key_management.azure ? <<-EOT
     4. Azure Key Vault:
@@ -359,7 +359,7 @@ locals {
        - Follow Azure security baselines
        - Use key rotation policies
     EOT
-    : ""}
+: ""}
 
     ${local.security_tooling.cloud_key_management.gcp ? <<-EOT
     5. Google Cloud KMS:
@@ -369,7 +369,7 @@ locals {
        - Follow GCP security best practices
        - Use CMEK where appropriate
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_tooling.security_tools) > 0 ? <<-EOT
     6. Additional Security Tools:
@@ -379,7 +379,7 @@ locals {
        - Regular security scanning
        - Monitor security alerts
     EOT
-    : ""}
+: ""}
 
     7. Security Best Practices:
        - Never store secrets in code
@@ -398,7 +398,7 @@ locals {
        - Regular compliance audits
        - Maintain documentation
     EOT
-    : ""}
+: ""}
 
     ${local.security_certification.requires_audit ? <<-EOT
     2. Audit Requirements:
@@ -408,7 +408,7 @@ locals {
        - Regular audit reviews
        - Maintain audit trail
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_certification.security_controls) > 0 ? <<-EOT
     3. Security Controls:
@@ -417,7 +417,7 @@ locals {
        - Regular control testing
        - Document exceptions
     EOT
-    : ""}
+: ""}
 
     ## Container Security Standards
     ${length(local.container_security.scanning_tools) > 0 ? <<-EOT
@@ -428,7 +428,7 @@ locals {
        - Monitor dependencies
        - Regular rescanning
     EOT
-    : ""}
+: ""}
 
     ${length(local.container_security.runtime_security) > 0 ? <<-EOT
     2. Runtime Protection:
@@ -437,7 +437,7 @@ locals {
        - Enforce security policies
        - Alert on violations
     EOT
-    : ""}
+: ""}
 
     ${length(local.container_security.registry_security) > 0 ? <<-EOT
     3. Registry Security:
@@ -446,7 +446,7 @@ locals {
        - Verify signatures
        - Enforce trusted sources
     EOT
-    : ""}
+: ""}
 
     4. Container Best Practices:
        ${local.container_security.uses_distroless ? "- Use distroless base images" : "- Minimize base image size"}
@@ -465,7 +465,7 @@ locals {
        - Track security metrics
        - Regular baseline updates
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_scanning_tools.dast_tools) > 0 ? <<-EOT
     2. Dynamic Application Security Testing:
@@ -475,7 +475,7 @@ locals {
        - Monitor for vulnerabilities
        - Document findings
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_scanning_tools.dependency_scanning) > 0 ? <<-EOT
     3. Dependency Management:
@@ -485,7 +485,7 @@ locals {
        - License compliance
        - Update scheduling
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_scanning_tools.compliance_tools) > 0 ? <<-EOT
     4. Compliance Scanning:
@@ -495,7 +495,7 @@ locals {
        - Remediation tracking
        - Compliance reporting
     EOT
-    : ""}
+: ""}
 
     ${length(local.security_scanning_tools.reporting_tools) > 0 ? <<-EOT
     5. Security Reporting:
@@ -505,7 +505,7 @@ locals {
        - Trend analysis
        - Issue management
     EOT
-    : ""}
+: ""}
 
     6. Security Review Process:
        - Regular security assessments
@@ -524,7 +524,7 @@ locals {
        - Monitor network traffic
        - Regular security audits
     EOT
-    : ""}
+: ""}
 
     ${local.network_security.zero_trust ? <<-EOT
     2. Zero Trust Architecture:
@@ -534,7 +534,7 @@ locals {
        - Limit access scope
        - Monitor all traffic
     EOT
-    : ""}
+: ""}
 
     ${local.network_security.service_mesh ? <<-EOT
     3. Service Mesh Security:
@@ -544,7 +544,7 @@ locals {
        - Secure service discovery
        - Regular mesh updates
     EOT
-    : ""}
+: ""}
 
     ${length(local.network_security.network_policies) > 0 ? <<-EOT
     4. Network Policies:
@@ -554,7 +554,7 @@ locals {
        - Regular policy review
        - Monitor policy violations
     EOT
-    : ""}
+: ""}
 
     5. Network Best Practices:
        - Secure all endpoints
@@ -573,7 +573,7 @@ locals {
        - Secure key management
        - Regular key rotation
     EOT
-    : ""}
+: ""}
 
     ${length(local.data_protection.backup_tools) > 0 ? <<-EOT
     2. Backup Solutions:
@@ -583,7 +583,7 @@ locals {
        - Test restoration process
        - Secure backup storage
     EOT
-    : ""}
+: ""}
 
     ${length(local.data_protection.data_lifecycle) > 0 ? <<-EOT
     3. Data Lifecycle Management:
@@ -593,7 +593,7 @@ locals {
        - Manage data classification
        - Document lifecycle rules
     EOT
-    : ""}
+: ""}
 
     4. Data Protection Best Practices:
        - Classify sensitive data
