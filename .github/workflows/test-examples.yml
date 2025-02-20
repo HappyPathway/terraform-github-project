@@ -15,11 +15,13 @@ on:
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
   GITHUB_ORG: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
+  GITHUB_OWNER: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
   GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
 permissions:
   contents: read
   pull-requests: read
+  organization: read
 
 jobs:
   test-examples:
@@ -61,6 +63,8 @@ jobs:
 
       - name: Terraform Init and Apply
         working-directory: examples/${{ matrix.example }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           terraform init
           terraform apply -auto-approve
