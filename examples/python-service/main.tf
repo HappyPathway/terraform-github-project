@@ -21,16 +21,19 @@ module "python_project" {
   base_repository = {
     name        = "python-service"
     description = "Python microservice project with development environment configuration"
+    visibility  = "public"
   }
 
   repositories = [
     {
       name        = "service-api"
       description = "Main API service"
+      github_is_private = false
     },
     {
       name        = "service-worker"
       description = "Background worker service"
+      github_is_private = false
     }
   ]
 

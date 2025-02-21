@@ -15,7 +15,7 @@ module "project_repos" {
 
   # Repository configuration
   create_repo             = true
-  enforce_prs             = try(each.value.enable_branch_protection, true)
+  enforce_prs             = try(each.value.enable_branch_protection, false)
   github_repo_description = try(each.value.description, "Repository for ${var.project_name} project")
   github_repo_topics      = try(each.value.topics, [])
   github_is_private       = try(each.value.visibility, "private") == "private"

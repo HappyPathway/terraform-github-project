@@ -159,8 +159,8 @@ variable "base_repository" {
     require_signed_commits = optional(bool, false)
 
     # Protection settings
-    enable_branch_protection = optional(bool, true)
-    enforce_prs              = optional(bool, true)
+    enable_branch_protection = optional(bool, false)
+    enforce_prs              = optional(bool, false)
     branch_protection = optional(object({
       enforce_admins                  = optional(bool, true)
       required_linear_history         = optional(bool, true)

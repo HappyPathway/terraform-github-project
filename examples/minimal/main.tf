@@ -18,15 +18,20 @@ module "github_project" {
   project_name    = "my-project"
   repo_org        = "HappyPathway"
   project_prompt  = "This is the main project prompt that will be used across repos"
-
-  # Minimal repository configuration
+  
+  # Minimal repository configuration with public visibility
   repositories = [
     {
-      name   = "service-a"
-      prompt = "Service A specific prompt"
+      name       = "service-a"
+      prompt     = "Service A specific prompt"
+      visibility = "public"  # Make repository public
+      github_is_private = false
+      enforce_prs = false
     }
   ]
-
-  # Base repository configuration - all settings use defaults
-  base_repository = {}
+  base_repository = {
+    name        = "my-project"
+    description = "Main project repository"
+    visibility  = "public"
+  }
 }
