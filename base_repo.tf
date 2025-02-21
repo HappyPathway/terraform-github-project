@@ -2,10 +2,10 @@
 locals {
   base_repo_config = merge(var.base_repository, {
     # ... existing defaults ...
-    
+
     # Only enable branch protection for public repos or when GitHub Pro is enabled
     enable_branch_protection = (
-      try(var.base_repository.enable_branch_protection, true) && 
+      try(var.base_repository.enable_branch_protection, true) &&
       (try(var.base_repository.visibility, "private") == "public" || var.github_pro_enabled)
     )
   })
@@ -124,19 +124,19 @@ module "base_repository_files" {
             name = var.project_name
             build = {
               dockerfile = "Dockerfile"
-              context = "."
+              context    = "."
             }
             customizations = {
               vscode = {
                 extensions = try(var.development_container.vs_code_extensions, [])
               }
             }
-            containerEnv = try(var.development_container.env_vars, {})
-            forwardPorts = try(var.development_container.ports, [])
+            containerEnv      = try(var.development_container.env_vars, {})
+            forwardPorts      = try(var.development_container.ports, [])
             postCreateCommand = join(" && ", try(var.development_container.post_create_commands, []))
             dockerComposeFile = try(var.development_container.docker_compose.enabled, false) ? "docker-compose.yml" : null
-            service = try(var.development_container.docker_compose.enabled, false) ? "app" : null
-            workspaceFolder = try(var.development_container.docker_compose.enabled, false) ? "/workspace" : null
+            service           = try(var.development_container.docker_compose.enabled, false) ? "app" : null
+            workspaceFolder   = try(var.development_container.docker_compose.enabled, false) ? "/workspace" : null
           })
           description = "Development container configuration"
         }
@@ -149,7 +149,7 @@ module "base_repository_files" {
             services = merge({
               app = {
                 build = {
-                  context = "."
+                  context    = "."
                   dockerfile = "Dockerfile"
                 }
                 volumes = [".:/workspace:cached"]
@@ -170,8 +170,8 @@ module "base_repository_files" {
 resource "github_branch_protection" "base_repo" {
   count = try(local.base_repo_config.enable_branch_protection, true) ? 1 : 0
 
-  repository_id = module.base_repo.github_repo.node_id
-  pattern       = module.base_repo.default_branch
+  repository_id           = module.base_repo.github_repo.node_id
+  pattern                 = module.base_repo.default_branch
   enforce_admins          = try(local.base_repo_config.branch_protection.enforce_admins, true)
   required_linear_history = try(local.base_repo_config.branch_protection.required_linear_history, true)
   allows_force_pushes     = try(local.base_repo_config.branch_protection.allow_force_pushes, false)

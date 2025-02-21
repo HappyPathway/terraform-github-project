@@ -10,10 +10,10 @@ variable "branch" {
 }
 
 variable "files" {
-  description = "Map of files to create in the repository. The key is the file path, and the value is an object containing content and description"
-  type = map(object({
+  description = "List of files to create in the repository. The key is the file path, and the value is an object containing content and description"
+  type = list(object({
     content     = string
-    description = string
+    name = string
   }))
 }
 

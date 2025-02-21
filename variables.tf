@@ -284,12 +284,12 @@ variable "security_config" {
   description = "Configuration for security module including container, network, and compliance settings"
   type = object({
     enable_security_scanning = optional(bool, true)
-    security_frameworks     = optional(list(string), [])
+    security_frameworks      = optional(list(string), [])
     container_security_config = optional(object({
       scanning_tools    = optional(list(string), [])
       runtime_security  = optional(list(string), [])
       registry_security = optional(list(string), [])
-      uses_distroless  = optional(bool, false)
+      uses_distroless   = optional(bool, false)
     }), {})
   })
   default = {}
@@ -299,11 +299,11 @@ variable "development_config" {
   description = "Configuration for development module including standards and deployment patterns"
   type = object({
     testing_requirements = optional(object({
-      required = optional(bool, true)
+      required           = optional(bool, true)
       coverage_threshold = optional(number, 80)
     }), {})
     ci_cd_config = optional(object({
-      ci_cd_tools = optional(list(string), [])
+      ci_cd_tools            = optional(list(string), [])
       required_status_checks = optional(list(string), [])
     }), {})
   })
@@ -314,10 +314,10 @@ variable "infrastructure_config" {
   description = "Configuration for infrastructure module including IaC and cloud providers"
   type = object({
     iac_config = optional(object({
-      iac_tools = optional(list(string), [])
-      cloud_providers = optional(list(string), [])
+      iac_tools           = optional(list(string), [])
+      cloud_providers     = optional(list(string), [])
       documentation_tools = optional(list(string), ["terraform-docs"])
-      testing_frameworks = optional(list(string), [])
+      testing_frameworks  = optional(list(string), [])
     }), {})
   })
   default = {}
@@ -332,14 +332,14 @@ variable "github_pro_enabled" {
 variable "quality_config" {
   description = "Configuration for code quality module including linting and documentation requirements"
   type = object({
-    enable_code_scanning = optional(bool, true)
-    code_quality_tools = optional(list(string), [])
-    linting_required = optional(bool, true)
-    type_safety = optional(bool, true)
+    enable_code_scanning   = optional(bool, true)
+    code_quality_tools     = optional(list(string), [])
+    linting_required       = optional(bool, true)
+    type_safety            = optional(bool, true)
     documentation_required = optional(bool, true)
-    formatting_tools = optional(list(string), [])
-    linting_tools = optional(list(string), [])
-    documentation_tools = optional(list(string), [])
+    formatting_tools       = optional(list(string), [])
+    linting_tools          = optional(list(string), [])
+    documentation_tools    = optional(list(string), [])
   })
   default = {}
 }

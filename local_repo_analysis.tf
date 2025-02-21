@@ -4,12 +4,12 @@ locals {
     coalesce(repo.vulnerability_alerts, false) ||
     try(repo.security_and_analysis.secret_scanning.status == "enabled", false)
   ])
-  
+
   repository_urls = [
     for repo in var.repositories :
     "https://github.com/${var.repo_org}/${repo.name}"
   ]
-  
+
   repository_names = [
     for repo in var.repositories :
     repo.name
@@ -26,7 +26,7 @@ locals {
     branch_cleanup = alltrue([for repo in var.repositories : coalesce(repo.github_delete_branch_on_merge, true)])
     review_requirements = {
       required       = var.enforce_prs
-      min_reviewers = length(var.repositories) > 0 ? coalesce(var.repositories[0].github_required_approving_review_count, 1) : 1
+      min_reviewers  = length(var.repositories) > 0 ? coalesce(var.repositories[0].github_required_approving_review_count, 1) : 1
       codeowners     = alltrue([for repo in var.repositories : coalesce(repo.github_require_code_owner_reviews, true)])
       dismiss_stale  = alltrue([for repo in var.repositories : coalesce(repo.github_dismiss_stale_reviews, true)])
       enforce_admins = alltrue([for repo in var.repositories : coalesce(repo.github_enforce_admins_branch_protection, true)])

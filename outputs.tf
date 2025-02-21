@@ -134,7 +134,7 @@ output "base_repository_files" {
   description = "Files created in the base repository"
   value = {
     managed_files = module.base_repository_files.files
-    codeowners = try(module.base_repository_files.files["CODEOWNERS"].content, null)
+    codeowners    = try(module.base_repository_files.files["CODEOWNERS"].content, null)
   }
 }
 
@@ -147,8 +147,8 @@ output "security_configuration" {
   description = "Complete security configuration derived from repository analysis"
   value = {
     container_security = module.security.container_security_config
-    network_security  = module.security.network_security_config
-    compliance       = module.security.compliance_config
+    network_security   = module.security.network_security_config
+    compliance         = module.security.compliance_config
   }
 }
 
@@ -175,23 +175,23 @@ output "infrastructure_configuration" {
 output "quality_configuration" {
   description = "Code quality standards and tooling configuration"
   value = {
-    code_quality_config     = module.quality.code_quality_config
-    linting_tools          = module.quality.detected_linting_tools
-    formatting_tools       = module.quality.detected_formatting_tools
-    documentation_tools    = module.quality.detected_documentation_tools
-    has_type_checking     = module.quality.has_type_checking
+    code_quality_config = module.quality.code_quality_config
+    linting_tools       = module.quality.detected_linting_tools
+    formatting_tools    = module.quality.detected_formatting_tools
+    documentation_tools = module.quality.detected_documentation_tools
+    has_type_checking   = module.quality.has_type_checking
   }
 }
 
 output "copilot_configuration" {
   description = "GitHub Copilot configuration and detected patterns"
   value = {
-    instructions = module.copilot.copilot_instructions
-    languages = module.copilot.detected_languages
-    frameworks = module.copilot.detected_frameworks
-    testing_tools = module.copilot.detected_testing_tools
-    iac_tools = module.copilot.detected_iac_tools
+    instructions    = module.copilot.copilot_instructions
+    languages       = module.copilot.detected_languages
+    frameworks      = module.copilot.detected_frameworks
+    testing_tools   = module.copilot.detected_testing_tools
+    iac_tools       = module.copilot.detected_iac_tools
     cloud_providers = module.copilot.detected_cloud_providers
-    security_tools = module.copilot.detected_security_tools
+    security_tools  = module.copilot.detected_security_tools
   }
 }

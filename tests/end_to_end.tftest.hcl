@@ -1,21 +1,23 @@
-mock_provider "github" {
-  source = "./tests/mocks"
+variables {
+  project_name = "test-e2e-${replace(uuid(), "-", "")}"  // Make project name unique
+  repo_org = "test-org"
+  project_prompt = "End-to-end test project"
+  github_pro_enabled = false
 }
 
 run "verify_end_to_end_repository_configuration" {
+  command = plan  // Use plan to avoid actual resource creation
+
   variables {
-    project_name = "test-e2e"  // Use static name for predictable testing
-    repo_org = "test-org"
-    project_prompt = "End-to-end test project"
-    github_pro_enabled = false
     base_repository = {
-      name = "test-e2e"
+      name = var.project_name  // Use dynamic project name
       visibility = "public"  // Required for branch protection with GitHub Free
       description = "Test base repository"
+      archive_on_destroy = false
     }
     repositories = [
       {
-        name = "app-test-${uuid()}"
+        name = "app-${replace(uuid(), "-", "")}"  // Make repo name unique
         github_repo_topics = [
           "typescript",
           "react",
@@ -61,7 +63,7 @@ run "verify_end_to_end_repository_configuration" {
 
   # Verify repository file creation using new module outputs
   assert {
-    condition = contains(module.base_repository_files.file_paths, "test-e2e.code-workspace")
+    condition = contains(module.base_repository_files.file_paths, "${var.project_name}.code-workspace")
     error_message = "Workspace configuration file should be created"
   }
 

@@ -3,9 +3,9 @@ resource "github_repository_file" "files" {
 
   repository          = var.repository
   branch             = var.branch
-  file               = each.key
+  file               = each.value.name
   content            = each.value.content
-  commit_message     = "Add ${each.value.description}"
+  commit_message     = "Adding ${each.key.name}"
   overwrite_on_create = var.overwrite_on_create
 
   lifecycle {
