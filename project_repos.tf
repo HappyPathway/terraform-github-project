@@ -2,6 +2,15 @@
 locals {
   project_repositories   = { for repo in var.repositories : repo.name => repo }
   default_prompt_content = "No specific guidelines provided"
+  
+  # Only enable branch protection for public repos or when GitHub Pro is enabled
+  branch_protection_enabled = {
+    for name, repo in local.project_repositories : name => (
+      try(repo.create_repo, true) && 
+      try(repo.enable_branch_protection, true) && 
+      (try(repo.visibility, "private") == "public" || var.github_pro_enabled)
+    )
+  }
 }
 
 module "project_repos" {
@@ -74,7 +83,7 @@ module "project_repos" {
 resource "github_branch_protection" "project_repos" {
   for_each = {
     for name, repo in local.project_repositories : name => repo
-    if try(repo.create_repo, true) && try(repo.enable_branch_protection, true)
+    if local.branch_protection_enabled[name]
   }
 
   repository_id = module.project_repos[each.key].github_repo.node_id

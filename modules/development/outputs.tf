@@ -22,3 +22,19 @@ output "ci_cd_tools" {
   description = "CI/CD tools detected or configured"
   value       = module.deployment.ci_cd_tools_detected
 }
+
+output "standards_config" {
+  description = "Development standards configuration"
+  value = {
+    testing_requirements = local.testing_requirements
+    code_quality = local.code_quality_config
+  }
+}
+
+output "deployment_config" {
+  description = "Deployment configuration"  
+  value = {
+    ci_cd = local.ci_cd_config
+    environments = local.deployment_environments
+  }
+}

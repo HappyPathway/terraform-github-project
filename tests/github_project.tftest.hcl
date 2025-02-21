@@ -1,5 +1,5 @@
 mock_provider "github" {
-  source = "./mocks/github.tfmock.hcl"
+  source = "./tests/mocks"
 }
 
 variables {

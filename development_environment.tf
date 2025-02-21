@@ -1,3 +1,50 @@
+locals {
+  default_vscode_settings = {
+    "editor.formatOnSave": true,
+    "editor.rulers": [80, 120],
+    "[terraform]": {
+      "editor.defaultFormatter": "hashicorp.terraform",
+      "editor.formatOnSave": true,
+      "editor.formatOnSaveMode": "file"
+    }
+  }
+
+  effective_vscode = {
+    settings = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
+    extensions = {
+      recommended = distinct(concat(
+        try(var.vs_code_workspace.extensions.recommended, []),
+        try(var.vs_code_workspace.extensions.required, []),
+        ["github.copilot", "github.copilot-chat"]
+      ))
+    }
+    tasks = try(var.vs_code_workspace.tasks, [])
+    launch_configurations = try(var.vs_code_workspace.launch_configurations, [])
+  }
+
+  effective_devcontainer = var.development_container != null ? {
+    base_image = var.development_container.base_image
+    vs_code_extensions = distinct(concat(
+      local.effective_vscode.extensions.recommended,
+      try(var.development_container.vs_code_extensions, [])
+    ))
+    ports = try(var.development_container.ports, [])
+    env_vars = try(var.development_container.env_vars, {})
+    post_create_commands = try(var.development_container.post_create_commands, [])
+    docker_compose = {
+      enabled = try(var.development_container.docker_compose.enabled, false)
+      services = try(var.development_container.docker_compose.services, {})
+    }
+  } : null
+
+  effective_codespaces = {
+    machine_type = try(var.codespaces.machine_type, "medium")
+    prebuild_enabled = try(var.codespaces.prebuild_enabled, false)
+    retention_days = try(var.codespaces.retention_days, 30)
+    env_vars = try(var.codespaces.env_vars, {})
+  }
+}
+
 resource "github_repository_file" "devcontainer" {
   for_each   = var.development_container != null ? { for repo in var.repositories : repo.name => repo } : {}
   repository = module.project_repos[each.key].github_repo.name
@@ -29,9 +76,8 @@ resource "github_repository_file" "devcontainer" {
 }
 
 resource "github_repository_file" "docker_compose" {
-  for_each = var.development_container != null ? {
+  for_each = var.development_container != null && try(local.effective_devcontainer.docker_compose.enabled, false) ? {
     for repo in var.repositories : repo.name => repo
-    if try(local.effective_devcontainer.docker_compose.enabled, false)
   } : {}
   repository = module.project_repos[each.key].github_repo.name
   branch     = module.project_repos[each.key].default_branch
@@ -65,18 +111,15 @@ resource "github_repository_file" "workspace_config" {
         }
       ]
     )
-    settings = try(local.effective_vscode.settings, local.default_vscode_settings)
+    settings = local.effective_vscode.settings
     extensions = {
-      recommendations = distinct(concat(
-        try(local.effective_vscode.extensions.recommended, []),
-        ["github.copilot"]
-      ))
+      recommendations = local.effective_vscode.extensions.recommended
       unwantedRecommendations = []
     }
-    tasks = try(local.effective_vscode.tasks, [])
+    tasks = local.effective_vscode.tasks
     launch = {
       version        = "0.2.0"
-      configurations = try(local.effective_vscode.launch_configurations, [])
+      configurations = local.effective_vscode.launch_configurations
     }
   })
   commit_message      = "Update VS Code workspace configuration"

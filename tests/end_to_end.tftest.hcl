@@ -1,11 +1,15 @@
 run "verify_end_to_end_repository_configuration" {
   variables {
-    project_name = "e2e-test"
+    project_name = "e2e-test-${formatdate("YYYYMMDD-hhmmss", timestamp())}"
     repo_org = "test-org"
     project_prompt = "End-to-end test project"
+    github_pro_enabled = false
+    base_repository = {
+      visibility = "public"  // Required for branch protection with GitHub Free
+    }
     repositories = [
       {
-        name = "app"
+        name = "app-test-e2e-${formatdate("YYYYMMDD-hhmmss", timestamp())}"
         github_repo_topics = [
           "typescript",
           "react",
@@ -14,7 +18,12 @@ run "verify_end_to_end_repository_configuration" {
           "terraform",
           "jest"
         ]
-        description = "Main application repository"
+        description = "Test application repository"
+        visibility = "public"  // Required for branch protection with GitHub Free
+        template = {
+          owner = "owner"
+          repository = "template"
+        }
         allow_merge_commit = false
         allow_rebase_merge = true
         delete_branch_on_merge = true

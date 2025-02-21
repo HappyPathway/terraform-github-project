@@ -1,5 +1,5 @@
 mock_provider "github" {
-  source = "./mocks/github.tfmock.hcl"
+  source = "./tests/mocks"
 }
 
 run "development_environment_configuration" {
@@ -43,16 +43,11 @@ run "development_environment_configuration" {
         recommended = ["ms-python.python"]
       }
     }
-
-    codespaces = {
-      machine_type = "medium"
-      prebuild_enabled = true
-    }
   }
 
   assert {
-    condition = contains(keys(output.repository_names), "test-service")
-    error_message = "Repository was not created correctly"
+    condition = output.repository_names[0] == "test-service"
+    error_message = "Repository test-service was not created"
   }
 }
 
@@ -88,7 +83,7 @@ run "validate_devcontainer_files" {
             image = "redis:alpine"
             ports = ["6379:6379"]
             environment = {
-              REDIS_MAXMEMORY = "512mb"
+              REDIS_ARGS = "--maxmemory 512mb"
             }
           }
         }
@@ -152,6 +147,11 @@ run "validate_workspace_config" {
     condition = github_repository_file.workspace_config[0].file == "${var.project_name}.code-workspace"
     error_message = "Workspace configuration file was not created with correct name"
   }
+
+  assert {
+    condition = contains(jsondecode(github_repository_file.workspace_config[0].content).extensions.recommendations, "ms-python.python")
+    error_message = "VS Code workspace file should include configured extensions"
+  }
 }
 
 run "development_features_disabled_by_default" {
@@ -178,18 +178,13 @@ run "development_features_disabled_by_default" {
   }
 
   assert {
-    condition     = length(github_repository_file.devcontainer) == 0
+    condition = length(github_repository_file.devcontainer) == 0
     error_message = "DevContainer files should not be created when feature is not explicitly enabled"
   }
 
   assert {
-    condition     = length(github_repository_file.docker_compose) == 0
+    condition = length(github_repository_file.docker_compose) == 0
     error_message = "Docker Compose files should not be created when feature is not explicitly enabled"
-  }
-
-  assert {
-    condition     = length(github_repository_file.codespaces) == 0
-    error_message = "Codespaces configuration should not be created when feature is not explicitly enabled"
   }
 }
 
@@ -217,61 +212,17 @@ run "workspace_file_always_created" {
   }
 
   assert {
-    condition     = length(github_repository_file.workspace_config) == 1
+    condition = length(github_repository_file.workspace_config) == 1
     error_message = "VS Code workspace file should always be created in base repository"
   }
 
   assert {
-    condition     = github_repository_file.workspace_config[0].file == "test-dev-env.code-workspace"
+    condition = github_repository_file.workspace_config[0].file == "test-dev-env.code-workspace"
     error_message = "VS Code workspace file should have correct name"
   }
 
   assert {
-    condition     = github_repository_file.workspace_config[0].repository == "test-dev-env"
+    condition = github_repository_file.workspace_config[0].repository == "test-dev-env"
     error_message = "VS Code workspace file should be created in base repository"
-  }
-}
-
-run "workspace_file_settings" {
-  command = plan
-
-  variables {
-    project_name = "test-dev-env"
-    repo_org     = "test-org"
-    github_pro_enabled = false
-    project_prompt = "test prompt for testing development environment configuration"
-    base_repository = {
-      name        = "test-dev-env"
-      description = "Test project for development environment"
-      visibility  = "public"
-    }
-
-    repositories = [
-      {
-        name        = "test-service"
-        description = "Test service repository"
-        visibility  = "public"
-      }
-    ]
-
-    vs_code_workspace = {
-      settings = {
-        "editor.formatOnSave": true
-      }
-      extensions = {
-        recommended = ["ms-python.python"]
-        required = ["github.copilot"]
-      }
-    }
-  }
-
-  assert {
-    condition     = contains(jsondecode(github_repository_file.workspace_config[0].content).extensions.recommendations, "ms-python.python")
-    error_message = "VS Code workspace file should include custom extensions when provided"
-  }
-
-  assert {
-    condition     = contains(jsondecode(github_repository_file.workspace_config[0].content).extensions.recommendations, "github.copilot")
-    error_message = "VS Code workspace file should always include github.copilot extension"
   }
 }

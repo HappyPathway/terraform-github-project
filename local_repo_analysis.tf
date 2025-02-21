@@ -1,4 +1,20 @@
 locals {
+  security_scanning = anytrue([
+    for repo in var.repositories :
+    coalesce(repo.vulnerability_alerts, false) ||
+    try(repo.security_and_analysis.secret_scanning.status == "enabled", false)
+  ])
+  
+  repository_urls = [
+    for repo in var.repositories :
+    "https://github.com/${var.repo_org}/${repo.name}"
+  ]
+  
+  repository_names = [
+    for repo in var.repositories :
+    repo.name
+  ]
+
   repo_analysis = {
     merge_strategies = distinct(flatten([
       for repo in var.repositories : [

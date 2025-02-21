@@ -17,3 +17,8 @@ output "runtime_security_required" {
   description = "Whether runtime security features are required based on repository topics"
   value       = local.runtime_security_required
 }
+
+output "effective_container_config" {
+  description = "Effective container security configuration based on repository analysis"
+  value       = local.effective_container_config
+}

@@ -28,7 +28,7 @@ locals {
     }
     managed_extra_files = concat([
       {
-        path    = ".github/prompts/project.prompt.md"
+        path    = ".github/prompts/${var.project_name}.prompt.md"
         content = var.project_prompt
       },
       {
@@ -61,6 +61,20 @@ locals {
   }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
 
+module "copilot" {
+  source = "./modules/copilot"
+
+  project_name = var.project_name
+  repositories = var.repositories
+  copilot_instructions = var.copilot_instructions
+  enforce_prs = var.enforce_prs
+  github_pro_enabled = var.github_pro_enabled
+  depends_on = [
+    module.base_repo,
+    module.project_repos
+  ]
+}
+
 module "security" {
   source = "./modules/security"
 
@@ -68,6 +82,10 @@ module "security" {
   enable_security_scanning = try(var.security_config.enable_security_scanning, true)
   security_frameworks = try(var.security_config.security_frameworks, [])
   container_security_config = try(var.security_config.container_security_config, {})
+  depends_on = [
+    module.base_repo,
+    module.project_repos
+  ]
 }
 
 module "development" {
@@ -76,6 +94,10 @@ module "development" {
   repositories = var.repositories
   testing_requirements = try(var.development_config.testing_requirements, {})
   ci_cd_config = try(var.development_config.ci_cd_config, {})
+  depends_on = [
+    module.base_repo,
+    module.project_repos
+  ]
 }
 
 module "infrastructure" {
@@ -83,6 +105,10 @@ module "infrastructure" {
 
   repositories = var.repositories
   iac_config = try(var.infrastructure_config.iac_config, {})
+  depends_on = [
+    module.base_repo,
+    module.project_repos
+  ]
 }
 
 module "quality" {
@@ -90,6 +116,10 @@ module "quality" {
 
   repositories = var.repositories
   quality_config = var.quality_config
+  depends_on = [
+    module.base_repo,
+    module.project_repos
+  ]
 }
 
 locals {
@@ -100,4 +130,6 @@ locals {
     infrastructure = module.infrastructure.infrastructure_config
     quality        = module.quality.code_quality_config
   }
+  
+  generated_copilot_instructions = module.copilot.generated_instructions
 }

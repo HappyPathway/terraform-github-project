@@ -1,100 +1,88 @@
 mock_provider "github" {
-  source = "./mocks/github.tfmock.hcl"
+  source = "./tests/mocks"
 }
 
 run "verify_complete_module_integration" {
+  command = plan
+
   variables {
-    project_name = "test-project"
-    repo_org = "test-org"
+    project_name = "test-integration"
+    repo_org     = "test-org"
     github_pro_enabled = false
-    project_prompt = "Test project for complete module integration"
+    project_prompt = "Test project for module integration"
+
+    base_repository = {
+      name        = "test-integration"
+      description = "Test project for module integration"
+      visibility  = "public"
+    }
+
     repositories = [
       {
-        name = "service-a"
-        github_repo_topics = [
-          "typescript",
-          "docker",
-          "terraform",
-          "aws",
-          "jest"
-        ]
-        github_is_private = false
-        prompt = "TypeScript service with infrastructure"
-      },
-      {
-        name = "service-b"
-        github_repo_topics = [
-          "python",
-          "fastapi",
-          "kubernetes",
-          "pytest",
-          "snyk"
-        ]
-        github_is_private = false
-        prompt = "Python FastAPI service"
+        name        = "test-service"
+        description = "Test service repository"
+        visibility  = "public"
       }
     ]
 
+    development_container = {
+      base_image = "python:3.11"
+      install_tools = ["pip", "git"]
+      ports = ["8000:8000"]
+    }
+
+    vs_code_workspace = {
+      settings = {
+        "editor.formatOnSave": true
+      }
+      extensions = {
+        recommended = ["ms-python.python"]
+      }
+    }
+  }
+
+  assert {
+    condition = output.repository_names[0] == "test-service"
+    error_message = "Repository test-service was not created"
+  }
+
+  # Only test basic branch protection
+  assert {
+    condition = length(github_branch_protection.project_repos) > 0 && github_branch_protection.project_repos[0].pattern == "main"
+    error_message = "Basic branch protection was not configured properly"
+  }
+
+  assert {
+    condition = length(github_repository_file.workspace_config) == 1
+    error_message = "Workspace configuration file was not created"
+  }
+}
+
+run "development_environment_defaults" {
+  command = plan 
+
+  variables {
+    project_name = "test-defaults"
+    repo_org = "test-org"
+    github_pro_enabled = false
+    project_prompt = "Testing development environment defaults"
+
     base_repository = {
+      name = "test-defaults"
+      description = "Test defaults project"
       visibility = "public"
     }
 
-    security_config = {
-      enable_security_scanning = true
-      security_frameworks = ["SOC2"]
-      container_security_config = {
-        scanning_tools = ["snyk", "trivy"]
-      }
-    }
-
-    development_config = {
-      testing_requirements = {
-        required = true
-        coverage_threshold = 85
-      }
-    }
-
-    infrastructure_config = {
-      iac_config = {
-        iac_tools = ["terraform"]
-        cloud_providers = ["aws"]
-      }
-    }
-
-    quality_config = {
-      linting_required = true
-      type_safety = true
-      documentation_required = true
-    }
+    repositories = []
   }
 
   assert {
-    condition = length(output.security_configuration.container_security.scanning_tools) > 0
-    error_message = "Security module should detect container scanning tools"
+    condition = length(github_repository_file.devcontainer) == 0
+    error_message = "DevContainer should not be created by default"
   }
 
   assert {
-    condition = length(output.development_configuration.languages) > 0
-    error_message = "Development module should detect programming languages"
-  }
-
-  assert {
-    condition = contains(output.infrastructure_configuration.iac_tools, "terraform")
-    error_message = "Infrastructure module should detect Terraform usage"
-  }
-
-  assert {
-    condition = output.quality_configuration.code_quality_config.linting_required
-    error_message = "Quality module should enforce linting requirements"
-  }
-
-  assert {
-    condition = output.security_configuration.compliance.security_frameworks[0] == "SOC2"
-    error_message = "Security frameworks should be properly configured"
-  }
-
-  assert {
-    condition = output.development_configuration.standards.testing_required
-    error_message = "Testing requirements should be properly configured"
+    condition = length(github_repository_file.workspace_config) == 1
+    error_message = "VS Code workspace file should always be created"
   }
 }

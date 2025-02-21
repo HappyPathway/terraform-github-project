@@ -100,23 +100,8 @@ output "all_repos" {
 }
 
 output "repository_urls" {
-  description = "Map of repository names to their various URLs"
-  value = merge(
-    { (var.project_name) = {
-      html_url = module.base_repo.github_repo.html_url
-      ssh_url  = module.base_repo.ssh_clone_url
-      http_url = module.base_repo.github_repo.http_clone_url
-      git_url  = module.base_repo.github_repo.git_clone_url
-    } },
-    {
-      for name, repo in module.project_repos : name => {
-        html_url = repo.github_repo.html_url
-        ssh_url  = repo.ssh_clone_url
-        http_url = repo.github_repo.http_clone_url
-        git_url  = repo.github_repo.git_clone_url
-      }
-    }
-  )
+  description = "Map of repository names and their URLs"
+  value       = local.repository_urls
 }
 
 output "security_status" {
@@ -156,11 +141,8 @@ output "base_repository_files" {
 }
 
 output "repository_names" {
-  description = "List of all repository names in the project"
-  value = merge(
-    { (var.project_name) = module.base_repo.github_repo.name },
-    { for name, repo in module.project_repos : name => repo.github_repo.name }
-  )
+  description = "Map of repository names and their details"
+  value       = local.repository_names
 }
 
 output "security_configuration" {
@@ -200,5 +182,18 @@ output "quality_configuration" {
     formatting_tools       = module.quality.detected_formatting_tools
     documentation_tools    = module.quality.detected_documentation_tools
     has_type_checking     = module.quality.has_type_checking
+  }
+}
+
+output "copilot_configuration" {
+  description = "GitHub Copilot configuration and detected patterns"
+  value = {
+    instructions = module.copilot.copilot_instructions
+    languages = module.copilot.detected_languages
+    frameworks = module.copilot.detected_frameworks
+    testing_tools = module.copilot.detected_testing_tools
+    iac_tools = module.copilot.detected_iac_tools
+    cloud_providers = module.copilot.detected_cloud_providers
+    security_tools = module.copilot.detected_security_tools
   }
 }
