@@ -1,85 +1,59 @@
-name: "Terraform Validate"
+name: "Terraform Test and Tag"
 
 on:
-  pull_request:
-  workflow_dispatch:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
-env:
-  GITHUB_OWNER: ${{ vars.GH_ORG }}
-  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-  TF_WORKSPACE: happypathway
-  TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
-  
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
-  setup-terraform:
-    outputs:
-      commit_sha: ${{ steps.checkout.outputs.commit }}
-        
+  terraform:
+    name: "Terraform Test"
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      GITHUB_OWNER: ${{ vars.GH_ORG }}
+    
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
-        id: checkout
-          
+        with:
+          fetch-depth: 0
+      
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ vars.terraform_version }}
-          cli_config_credentials_token: ${{ secrets.TFE_TOKEN }}
-          cli_config_credentials_hostname: ${{ vars.terraform_api }}
-          
-      - name: terraform init
-        run: terraform init -upgrade
+          terraform_version: "~>1.6.0"
+          terraform_wrapper: false
 
-      - uses: actions/upload-artifact@master
-        name: Archive Configuration
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: terraform_dir
-          path: .terraform
-          retention-days: 1
-          include-hidden-files: true
-
-      - uses: actions/upload-artifact@master
-        name: Archive Lockfile
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: terraform_lockfile
-          path: .terraform.lock.hcl
-          retention-days: 1
-          include-hidden-files: true
-          
-  terraform-validate:
-    needs: setup-terraform
-    uses: HappyPathway/centralized-actions/.github/workflows/terraform-test.yml@main
-    with:
-      terraform_version: ${{ vars.terraform_version }}
-      terraform_api: ${{ vars.terraform_api }}
-      github_username: ${{ github.actor }}
-      github_email: ${{ github.actor }}@roknsound.com
-      github_org: ${{ github.repository_owner }}
-      setup_terraform: true
-      terraform_init: false
-      cache: ${{ github.workspace }}
-      download_cache: true
-      commit_sha: ${{ needs.setup-terraform.outputs.commit_sha }}
-    secrets:
-      TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-     
-  gtag:
-    needs: terraform-validate
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    uses: HappyPathway/centralized-actions/.github/workflows/gtag.yml@main
-    with:
-      patch: true
-      github_org: ${{ vars.GH_ORG }}
-      github_username: ${{ vars.GH_USERNAME }}
-      github_email: ${{ vars.GH_EMAIL }}
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: false
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+      
+      - name: Run Terraform Tests
+        id: test
+        run: terraform test
+        
+      - name: Bump version and push tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: anothrNick/github-tag-action@1.67.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+          WITH_V: true

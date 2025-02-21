@@ -4,7 +4,7 @@ locals {
       for repo in var.repositories : [
         for topic in coalesce(repo.github_repo_topics, []) :
         lower(topic) if contains([
-          "sonarqube", "checkmarx", "fortify", 
+          "sonarqube", "checkmarx", "fortify",
           "coverity", "semgrep", "codacy",
           "snyk-code", "github-code-scanning"
         ], lower(topic))

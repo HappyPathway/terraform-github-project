@@ -1,8 +1,21 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/django-app"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "django_project" {
   source = "../../"
 
   project_name    = "django-ecommerce"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "This is a Django e-commerce application with backend API and frontend components"
 
   repositories = [
@@ -14,6 +27,8 @@ module "django_project" {
       prompt      = "Django REST API service handling e-commerce operations"
       has_wiki    = true
       has_issues  = true
+      visibility  = "public"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           strict = true
@@ -27,6 +42,7 @@ module "django_project" {
       topics      = ["react", "typescript", "ecommerce"]
       gitignore_template = "Node"
       prompt      = "React TypeScript frontend for e-commerce platform"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["npm test", "eslint"]
@@ -39,6 +55,7 @@ module "django_project" {
       topics      = ["terraform", "aws", "iac"]
       gitignore_template = "Terraform"
       prompt      = "AWS infrastructure configuration for the e-commerce platform"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-fmt", "terraform-validate"]
@@ -51,20 +68,10 @@ module "django_project" {
   base_repository = {
     description = "Django E-commerce Project"
     topics      = ["project-base", "django", "ecommerce"]
+    visibility  = "public"
     pages = {
       branch = "gh-pages"
       path   = "/docs"
-    }
-    security_and_analysis = {
-      advanced_security = {
-        status = "enabled"
-      }
-      secret_scanning = {
-        status = "enabled"
-      }
-      secret_scanning_push_protection = {
-        status = "enabled"
-      }
     }
   }
 

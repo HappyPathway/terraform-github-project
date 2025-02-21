@@ -7,19 +7,19 @@ locals {
         repo.github_allow_rebase_merge == true ? "rebase merging" : ""
       ]
     ]))
-    branch_cleanup       = alltrue([for repo in var.repositories : coalesce(repo.github_delete_branch_on_merge, true)])
+    branch_cleanup = alltrue([for repo in var.repositories : coalesce(repo.github_delete_branch_on_merge, true)])
     review_requirements = {
-      required         = var.enforce_prs
-      min_reviewers   = min([for repo in var.repositories : coalesce(repo.github_required_approving_review_count, 1)]...)
-      codeowners      = alltrue([for repo in var.repositories : coalesce(repo.github_require_code_owner_reviews, true)])
-      dismiss_stale   = alltrue([for repo in var.repositories : coalesce(repo.github_dismiss_stale_reviews, true)])
-      enforce_admins  = alltrue([for repo in var.repositories : coalesce(repo.github_enforce_admins_branch_protection, true)])
+      required       = var.enforce_prs
+      min_reviewers  = min([for repo in var.repositories : coalesce(repo.github_required_approving_review_count, 1)]...)
+      codeowners     = alltrue([for repo in var.repositories : coalesce(repo.github_require_code_owner_reviews, true)])
+      dismiss_stale  = alltrue([for repo in var.repositories : coalesce(repo.github_dismiss_stale_reviews, true)])
+      enforce_admins = alltrue([for repo in var.repositories : coalesce(repo.github_enforce_admins_branch_protection, true)])
     }
     security = {
-      private_repos   = alltrue([for repo in var.repositories : coalesce(repo.github_is_private, true)])
-      vuln_alerts    = anytrue([for repo in var.repositories : coalesce(repo.vulnerability_alerts, false)])
-      secrets_exist  = length(flatten([for repo in var.repositories : coalesce(repo.secrets, [])])) > 0
-      scanning       = local.security_scanning
+      private_repos = alltrue([for repo in var.repositories : coalesce(repo.github_is_private, true)])
+      vuln_alerts   = anytrue([for repo in var.repositories : coalesce(repo.vulnerability_alerts, false)])
+      secrets_exist = length(flatten([for repo in var.repositories : coalesce(repo.secrets, [])])) > 0
+      scanning      = local.security_scanning
     }
     features = {
       has_projects = alltrue([for repo in var.repositories : coalesce(repo.github_has_projects, true)])
@@ -28,7 +28,7 @@ locals {
     }
     branch_protection = {
       status_checks = distinct(flatten([
-        for repo in var.repositories : 
+        for repo in var.repositories :
         try(repo.required_status_checks.contexts, [])
       ])),
       strict_updates = anytrue([

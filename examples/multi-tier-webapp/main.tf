@@ -1,3 +1,16 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/multi-tier-webapp"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "acme_shop_project" {
   source = "../../"
   project_name = "acme-shop"
