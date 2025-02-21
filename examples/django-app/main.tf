@@ -1,100 +1,29 @@
 module "django_project" {
   source = "../../"
 
-  project_name    = "django-ecommerce"
-  repo_org        = "my-org"
-  project_prompt  = "This is a Django e-commerce application with backend API and frontend components"
+  project_name    = "django-app"
+  repo_org        = "example-org"
+  project_prompt  = "Django web application with development environment configuration"
+
+  base_repository = {
+    description = "Django web application project with development environment configuration"
+    topics      = ["django", "python", "web-app"]
+    # Public by default - all features available
+  }
 
   repositories = [
     {
-      name        = "backend-api"
-      description = "Django REST API backend"
-      topics      = ["django", "python", "rest-api"]
-      gitignore_template = "Python"
-      prompt      = "Django REST API service handling e-commerce operations"
-      has_wiki    = true
-      has_issues  = true
-      branch_protection = {
-        required_status_checks = {
-          strict = true
-          contexts = ["pytest", "black", "isort", "flake8"]
-        }
-      }
+      name        = "django-frontend"
+      description = "Frontend application"
+      # Public by default, branch protection enabled
+      topics      = ["django", "frontend"]
     },
     {
-      name        = "frontend"
-      description = "React frontend for e-commerce site"
-      topics      = ["react", "typescript", "ecommerce"]
-      gitignore_template = "Node"
-      prompt      = "React TypeScript frontend for e-commerce platform"
-      branch_protection = {
-        required_status_checks = {
-          contexts = ["npm test", "eslint"]
-        }
-      }
-    },
-    {
-      name        = "infrastructure"
-      description = "Infrastructure as Code for e-commerce platform"
-      topics      = ["terraform", "aws", "iac"]
-      gitignore_template = "Terraform"
-      prompt      = "AWS infrastructure configuration for the e-commerce platform"
-      branch_protection = {
-        required_status_checks = {
-          contexts = ["terraform-fmt", "terraform-validate"]
-        }
-      }
+      name        = "django-api"
+      description = "Backend API service"
+      visibility  = "private"  # Example of private repo
+      topics      = ["django", "api", "backend"]
+      # Branch protection automatically disabled for Free tier
     }
   ]
-
-  # Base repository settings
-  base_repository = {
-    description = "Django E-commerce Project"
-    topics      = ["project-base", "django", "ecommerce"]
-    pages = {
-      branch = "gh-pages"
-      path   = "/docs"
-    }
-    security_and_analysis = {
-      advanced_security = {
-        status = "enabled"
-      }
-      secret_scanning = {
-        status = "enabled"
-      }
-      secret_scanning_push_protection = {
-        status = "enabled"
-      }
-    }
-  }
-
-  # Environment configuration
-  environments = {
-    "backend-api" = [
-      {
-        name = "development"
-        vars = [
-          {
-            name  = "DJANGO_SETTINGS_MODULE"
-            value = "config.settings.development"
-          }
-        ]
-      },
-      {
-        name = "production"
-        deployment_branch_policy = {
-          protected_branches = true
-        }
-        reviewers = {
-          teams = ["platform-team"]
-        }
-        vars = [
-          {
-            name  = "DJANGO_SETTINGS_MODULE"
-            value = "config.settings.production"
-          }
-        ]
-      }
-    ]
-  }
 }

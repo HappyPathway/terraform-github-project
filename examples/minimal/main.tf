@@ -6,14 +6,21 @@ module "github_project" {
   repo_org        = "my-org"
   project_prompt  = "This is the main project prompt that will be used across repos"
 
-  # Minimal repository configuration
+  # Example repositories showing both public and private configs
   repositories = [
     {
-      name   = "service-a"
-      prompt = "Service A specific prompt"
+      name        = "service-a"
+      prompt      = "Service A specific prompt"
+      # Public by default, branch protection enabled
+    },
+    {
+      name        = "service-b"
+      visibility  = "private"
+      prompt      = "Service B specific prompt"
+      # Private repo will automatically disable branch protection for Free tier
     }
   ]
 
-  # Base repository configuration - all settings use defaults
+  # Base repository configuration - will be public by default
   base_repository = {}
 }

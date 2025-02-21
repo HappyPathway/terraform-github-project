@@ -49,7 +49,8 @@ variable "repositories" {
     github_repo_description = optional(string)
     github_repo_topics = optional(list(string), [])
     github_push_restrictions = optional(list(string), [])
-    github_is_private = optional(bool, true)
+    visibility = optional(string, "public")  # Changed default to public
+    github_is_private = optional(bool)  # Deprecated, use visibility instead
     github_auto_init = optional(bool, true)
     github_allow_merge_commit = optional(bool, false)
     github_allow_squash_merge = optional(bool, true)
@@ -59,6 +60,8 @@ variable "repositories" {
     github_has_issues = optional(bool, false)
     github_has_wiki = optional(bool, true)
     github_default_branch = optional(string, "main")
+    # Note: branch protection requires public visibility or GitHub Pro
+    enable_branch_protection = optional(bool)
     github_required_approving_review_count = optional(number, 1)
     github_require_code_owner_reviews = optional(bool, true)
     github_dismiss_stale_reviews = optional(bool, true)

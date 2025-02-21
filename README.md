@@ -5,6 +5,34 @@
 [![Terraform Doc](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml)
 
 ![Terraform GitHub Project Overview](terraform-github-project.png)
+
+## GitHub Free Tier Compatibility
+
+This module is designed to work seamlessly with GitHub Free accounts by default:
+
+- All repositories are created as public by default
+- Branch protection is automatically enabled for public repositories
+- Private repositories automatically disable branch protection (GitHub Free limitation)
+- Clear warnings are provided when using features requiring GitHub Pro
+- Easy upgrade path to GitHub Pro when needed
+
+### Visibility and Feature Matrix
+
+| Feature                  | Public Repo | Private Repo (Free) | Private Repo (Pro) |
+|-------------------------|-------------|-------------------|------------------|
+| Branch Protection       | ✅          | ❌                | ✅               |
+| Required Reviews        | ✅          | ❌                | ✅               |
+| Code Owners            | ✅          | ❌                | ✅               |
+| Advanced Security      | Limited     | Limited           | ✅               |
+
+### Working with Private Repositories
+
+If you need private repositories with GitHub Free:
+1. Set `visibility = "private"` for the repository
+2. Branch protection will be automatically disabled
+3. A warning file will be added to the repository
+4. Consider upgrading to GitHub Pro if you need advanced features
+
 ## Quick Start Guide
 This module is designed to help you instantly scaffold entire GitHub project workspaces that are GitHub Copilot-ready. With just one Terraform configuration, you can:
 

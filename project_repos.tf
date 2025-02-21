@@ -14,10 +14,11 @@ module "project_repos" {
   
   # Repository configuration
   create_repo = true
-  enforce_prs = try(each.value.enable_branch_protection, true)
+  # Only enable branch protection for public repos or if explicitly set
+  enforce_prs = try(each.value.visibility, "public") == "public" ? try(each.value.enable_branch_protection, true) : false
   github_repo_description = try(each.value.description, "Repository for ${var.project_name} project")
   github_repo_topics = try(each.value.topics, [])
-  github_is_private = try(each.value.visibility, "private") == "private"
+  github_is_private = try(each.value.visibility, "public") == "private"
   github_has_issues = try(each.value.has_issues, true)
   github_has_wiki = try(each.value.has_wiki, true)
   github_has_projects = try(each.value.has_projects, true)
@@ -41,6 +42,26 @@ module "project_repos" {
       {
         path    = ".github/prompts/${var.project_name}.prompt.md"
         content = each.value.prompt
+      }
+    ] : [],
+    # Add warning file for private repos about branch protection limitations
+    try(each.value.visibility, "public") == "private" ? [
+      {
+        path    = ".github/FREE_TIER_LIMITATIONS.md"
+        content = <<-EOT
+# GitHub Free Tier Limitations
+
+This repository is private and is using GitHub Free tier. Please note:
+- Branch protection rules are not available for private repositories in the Free tier
+- Some advanced security features may be limited
+- Consider making the repository public to enable these features, or upgrade to GitHub Pro
+
+To enable branch protection and other advanced features:
+1. Make the repository public, or
+2. Upgrade to GitHub Pro
+
+For more information, see GitHub's documentation on feature availability.
+EOT
       }
     ] : []
   )

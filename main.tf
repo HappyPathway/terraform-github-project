@@ -10,7 +10,7 @@ locals {
     name = var.project_name  # Ensure name is always set
     description = "Base repository for ${var.project_name} project"
     topics = ["project-base"]
-    visibility = "private"
+    visibility = "public"  # Changed from private to public
     has_issues = true
     has_wiki = true
     has_projects = true

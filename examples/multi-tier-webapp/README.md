@@ -20,77 +20,64 @@ acme-shop/              # Main project repository (you are here)
 4. Keep documentation up to date
 5. Follow the defined code style guides in each repository
 
-# Multi-Tier Web Application with AWS Infrastructure
+# Multi-tier Web Application Example
 
-This example demonstrates how to set up a multi-tier web application with infrastructure as code using AWS resources and GitHub repositories.
+This example demonstrates how to configure a multi-tier web application project with GitHub Free tier compatibility.
 
 ## Repository Structure
 
-1. **frontend-repo/**
-   - React frontend application
-   - See `frontend-README.md` for details
+- **Frontend**: Public repository with full branch protection
+- **API**: Public repository with full branch protection
+- **Database**: Private repository (limited features with Free tier)
 
-2. **api-repo/**
-   - Node.js API service
-   - See `api-README.md` for details
+## Branch Protection Strategy
 
-3. **db-repo/**
-   - Database migrations and schemas
-   - See `db-README.md` for details
+### Public Repositories (Frontend & API)
+All branch protection features are available:
+- Required reviews
+- Status checks
+- Linear history
+- Code owner reviews
 
-4. **infra-repo/**
-   - Infrastructure as Code (Terraform)
-   - AWS resources configuration
-   - Auto-scaling and load balancing setup
+### Private Repository (Database)
+Limited features in GitHub Free tier:
+- Manual review process (documented in CONTRIBUTING.md)
+- Conventional commit messages
+- External CI/CD validation
 
-## AWS Infrastructure Setup
-
-### Prerequisites
-- AWS CLI configured
-- Terraform installed
-- Valid AWS credentials with necessary permissions
-- Route 53 domain (optional)
-
-### Main Components
-1. VPC and Networking
-2. Application Load Balancer (ALB)
-3. Auto Scaling Groups (ASG)
-4. RDS Database
-5. Security Groups
-
-### Infrastructure Code Structure (infra-repo)
-```
-infra-repo/
-├── modules/
-│   ├── vpc/
-│   ├── alb/
-│   ├── asg/
-│   ├── rds/
-│   └── security/
-├── environments/
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
-└── variables/
-    ├── dev.tfvars
-    ├── staging.tfvars
-    └── prod.tfvars
-```
-
-### Auto Scaling Group and ALB Configuration
-
+## Quick Start
 ```hcl
-# Example Terraform configuration for ASG and ALB
+module "web_app" {
+  source = "../../"
 
-module "alb" {
-  source = "./modules/alb"
-  
-  name               = "web-alb"
-  internal          = false
-  vpc_id            = module.vpc.vpc_id
-  subnets           = module.vpc.public_subnets
-  security_groups   = [module.security.alb_sg_id]
-  
-  http_tcp_listeners = [
+  project_name = "web-app"
+  repo_org     = "my-org"
+
+  repositories = [
     {
-      port               = 80
+      name = "frontend"
+      description = "Web application frontend"
+      visibility = "public"
+      enable_branch_protection = true
+    },
+    {
+      name = "api"
+      description = "Backend API service"
+      visibility = "public"
+      enable_branch_protection = true
+    },
+    {
+      name = "database"
+      description = "Database schemas and migrations"
+      visibility = "private"
+      # Branch protection automatically disabled for Free tier
+    }
+  ]
+}
+```
+
+## Best Practices
+1. Keep frontend and API repositories public for full feature access
+2. Use private repositories only when absolutely necessary
+3. Document manual review processes for private repositories
+4. Consider GitHub Pro upgrade if advanced features are needed for private repos

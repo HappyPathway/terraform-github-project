@@ -1,10 +1,24 @@
 locals {
+  # GitHub Free tier validation
+  free_tier_validation = {
+    private_repos_with_protection = [
+      for repo in var.repositories :
+      repo.name if try(repo.visibility, "public") == "private" && try(repo.enable_branch_protection, true)
+    ]
+    private_repos_with_advanced_security = [
+      for repo in var.repositories :
+      repo.name if try(repo.visibility, "public") == "private" && 
+      try(repo.security_and_analysis.advanced_security.status, "") == "enabled"
+    ]
+  }
+
   initialization_template_vars = {
     project_name = var.project_name
     repo_org     = var.repo_org
     base_repo    = try(var.repositories[0].name, "")
     repositories = [for repo in var.repositories : repo.name]
     custom_script = try(var.initialization_script.content, "")
+    free_tier_warnings = local.free_tier_validation
   }
 
   # Generate workspace file content

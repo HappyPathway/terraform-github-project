@@ -88,7 +88,8 @@ resource "github_repository_file" "base_repo_codeowners" {
 
 # Add branch protection after files are created
 resource "github_branch_protection" "base_repo" {
-  count = local.base_repository.enable_branch_protection ? 1 : 0
+  # Only create branch protection if repo is public or explicitly enabled
+  count = (local.base_repository.visibility == "public" || try(local.base_repository.force_branch_protection, false)) && local.base_repository.enable_branch_protection ? 1 : 0
 
   repository_id = module.base_repo.github_repo.node_id
   pattern       = module.base_repo.default_branch
