@@ -1,21 +1,21 @@
 provider "github" {}
 
 run "development_environment_configuration" {
-  command = plan
+  command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
     repo_org     = "test-org"
     project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
-      name        = "test-dev-env"
+      name        = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
       description = "Test project for development environment"
     }
 
     repositories = [
       {
-        name        = "test-service"
+        name        = "test-service-${formatdate("MMDD-hhmm", timestamp())}"
         description = "Test service repository"
       }
     ]
@@ -46,27 +46,27 @@ run "development_environment_configuration" {
   }
 
   assert {
-    condition = contains(keys(output.repository_names), "test-service")
+    condition = contains(keys(output.repository_names), "test-service-${local.test_suffix}")
     error_message = "Repository was not created correctly"
   }
 }
 
 run "validate_devcontainer_files" {
-  command = plan
+  command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${local.test_suffix}"
     repo_org     = "test-org"
     project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
-      name        = "test-dev-env"
+      name        = "test-dev-env-${local.test_suffix}"
       description = "Test project for development environment"
     }
 
     repositories = [
       {
-        name        = "test-service"
+        name        = "test-service-${local.test_suffix}"
         description = "Test service repository"
       }
     ]
@@ -100,15 +100,15 @@ run "validate_devcontainer_files" {
 }
 
 run "validate_workspace_config" {
-  command = plan
+  command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${local.test_suffix}"
     repo_org = "test-org"
     project_prompt = "Test project configuration"
     repositories = []
     base_repository = {
-      name = "test-dev-env"
+      name = "test-dev-env-${local.test_suffix}"
       description = "Test project for development environment"
     }
   }
@@ -130,20 +130,20 @@ run "validate_workspace_config" {
 }
 
 run "development_features_disabled_by_default" {
-  command = plan
+  command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
     repo_org     = "test-org"
     project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
-      name        = "test-dev-env"
+      name        = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
       description = "Test project for development environment"
     }
 
     repositories = [
       {
-        name        = "test-service"
+        name        = "test-service-${formatdate("MMDD-hhmm", timestamp())}"
         description = "Test service repository"
       }
     ]
@@ -169,31 +169,31 @@ run "workspace_file_always_created" {
   command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
     repositories = []
   }
 
   assert {
-    condition     = github_repository_file.workspace_config.repository == "test-dev-env"
+    condition     = github_repository_file.workspace_config.repository == "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
     error_message = "Workspace file should be created in base repository"
   }
 }
 
 run "workspace_file_settings" {
-  command = plan
+  command = apply
 
   variables {
-    project_name = "test-dev-env"
+    project_name = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
     repo_org     = "test-org"
     project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
-      name        = "test-dev-env"
+      name        = "test-dev-env-${formatdate("MMDD-hhmm", timestamp())}"
       description = "Test project for development environment"
     }
 
     repositories = [
       {
-        name        = "test-service"
+        name        = "test-service-${formatdate("MMDD-hhmm", timestamp())}"
         description = "Test service repository"
       }
     ]

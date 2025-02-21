@@ -39,6 +39,7 @@ module "project_repos" {
       path = ".github/FREE_TIER_LIMITATIONS.md"
       content = templatefile("${path.module}/templates/github_free_limitations.md.tpl", {
         repo_name = each.key
+        repo_visibility = each.value.visibility
         limitations = [
           "Branch protection rules are only available for public repositories",
           "Advanced security features are limited",

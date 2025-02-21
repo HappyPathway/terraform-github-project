@@ -22,12 +22,12 @@ locals {
     extra_files = []
     require_signed_commits = false
     create_repo = true
-    has_issues = false
+    has_issues = true
     has_wiki = true
     has_projects = true
     has_discussions = false
-    has_downloads = false
-    default_branch = "main"
+    has_downloads = true
+    default_branch = var.default_branch
   }
 
   # Process repositories with defaults and GitHub Free tier rules

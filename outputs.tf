@@ -35,39 +35,12 @@ output "base_repo" {
 }
 
 output "project_repos" {
-  description = "Map of all project repositories and their attributes"
+  description = "All project repositories"
   value = {
     for name, repo in module.project_repos : name => {
-      # Basic repository info
-      name        = repo.github_repo.name
-      full_name   = repo.github_repo.full_name
-      description = repo.github_repo.description
-      html_url    = repo.github_repo.html_url
-      ssh_url     = repo.ssh_clone_url
-      http_url    = repo.github_repo.http_clone_url
-      git_url     = repo.github_repo.git_clone_url
-      visibility  = repo.github_repo.visibility
-
-      # Repository settings
-      topics                 = repo.github_repo.topics
-      has_issues             = repo.github_repo.has_issues
-      has_projects           = repo.github_repo.has_projects
-      has_wiki               = repo.github_repo.has_wiki
-      is_template            = repo.github_repo.is_template
-      allow_merge_commit     = repo.github_repo.allow_merge_commit
-      allow_squash_merge     = repo.github_repo.allow_squash_merge
-      allow_rebase_merge     = repo.github_repo.allow_rebase_merge
-      allow_auto_merge       = repo.github_repo.allow_auto_merge
-      delete_branch_on_merge = repo.github_repo.delete_branch_on_merge
-
-      # Additional metadata
-      default_branch = repo.github_repo.default_branch
-      archived       = repo.github_repo.archived
-      homepage_url   = repo.github_repo.homepage_url
-      node_id        = repo.github_repo.node_id
-
-      # Git details
-      template = repo.github_repo.template
+      github_repo = repo.github_repo
+      managed_files = repo.managed_files
+      extra_files = repo.extra_files
     }
   }
 }

@@ -3,9 +3,12 @@ locals {
   base_repository = {
     name = var.project_name
     description = try(var.base_repository.description, "Base repository for ${var.project_name}")
-    visibility = try(var.base_repository.visibility, "public")  # Changed default to public
+    visibility = coalesce(try(var.base_repository.visibility, null), "public")  # Ensure public is the default
     force_branch_protection = try(var.base_repository.force_branch_protection, false)
     enable_branch_protection = try(var.base_repository.enable_branch_protection, true)
+    branch_protection = try(var.base_repository.branch_protection, {})
+    codeowners = try(var.base_repository.codeowners, [])
+    repo_files = try(var.base_repository.repo_files, {})
     topics = try(var.base_repository.topics, [])
     github_org_teams = try(var.base_repository.github_org_teams, [])
     admin_teams = try(var.base_repository.admin_teams, [])
@@ -25,7 +28,7 @@ module "base_repo" {
   # Repository configuration
   create_repo = local.base_repository.create_repo
   enforce_prs = local.base_repository.visibility == "public" || local.base_repository.force_branch_protection
-  github_is_private = local.base_repository.visibility == "private"
+  github_is_private = false  # Default to public for GitHub Free tier
   github_repo_description = local.base_repository.description
   github_repo_topics = local.base_repository.topics
 
