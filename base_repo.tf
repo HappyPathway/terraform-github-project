@@ -63,38 +63,105 @@ module "base_repo" {
   template_repo_org = try(local.base_repo_config.template.owner, null)
 }
 
-# Create repository files
-resource "github_repository_file" "base_repo_files" {
-  for_each = local.base_repo_config.managed_extra_files == null ? {} : {
-    for file in local.base_repo_config.managed_extra_files :
-    file.path => file
-  }
-
-  repository          = module.base_repo.github_repo.name
-  branch              = module.base_repo.default_branch
-  file                = each.value.path
-  content             = each.value.content
-  commit_message      = "Add ${each.value.path}"
-  overwrite_on_create = true
-
-  depends_on = [module.base_repo]
-}
-
-# Add CODEOWNERS file
-resource "github_repository_file" "base_repo_codeowners" {
-  count = local.base_repo_config.create_codeowners ? 1 : 0
+module "base_repository_files" {
+  source = "./modules/repository_files"
 
   repository = module.base_repo.github_repo.name
   branch     = module.base_repo.default_branch
-  file       = "CODEOWNERS"
-  content = templatefile("${path.module}/templates/CODEOWNERS", {
-    codeowners = concat(
-      try(local.base_repo_config.codeowners, []),
-      formatlist("* @%s", try(local.base_repo_config.admin_teams, []))
-    )
-  })
-  commit_message      = "Add CODEOWNERS file"
-  overwrite_on_create = true
+  files = {
+    for path, file in merge(
+      // Base repository files
+      local.repo_files,
+      // Repository-specific files
+      {
+        for path, file in local.base_repo_config.managed_extra_files != null ? {
+          for file in local.base_repo_config.managed_extra_files : file.path => {
+            content     = file.content
+            description = try(file.description, file.path)
+          }
+        } : {} : path => file
+      },
+      // CODEOWNERS file if enabled
+      local.base_repo_config.create_codeowners ? {
+        "CODEOWNERS" = {
+          content = templatefile("${path.module}/templates/CODEOWNERS", {
+            codeowners = concat(
+              try(local.base_repo_config.codeowners, []),
+              formatlist("* @%s", try(local.base_repo_config.admin_teams, []))
+            )
+          })
+          description = "CODEOWNERS file"
+        }
+      } : {},
+      // VS Code workspace configuration
+      var.vs_code_workspace != null ? {
+        "${var.project_name}.code-workspace" = {
+          content = jsonencode({
+            folders = concat(
+              [{ name = var.project_name, path = "." }],
+              [for repo in var.repositories : {
+                name = repo.name
+                path = "../${repo.name}"
+              }]
+            )
+            settings = try(var.vs_code_workspace.settings, {})
+            extensions = {
+              recommendations = distinct(concat(
+                try(var.vs_code_workspace.extensions.recommended, []),
+                try(var.vs_code_workspace.extensions.required, []),
+                ["github.copilot", "github.copilot-chat"]
+              ))
+            }
+            tasks = try(var.vs_code_workspace.tasks, [])
+          })
+          description = "VS Code workspace configuration"
+        }
+      } : {},
+      // DevContainer configuration if enabled
+      var.development_container != null ? {
+        ".devcontainer/devcontainer.json" = {
+          content = jsonencode({
+            name = var.project_name
+            build = {
+              dockerfile = "Dockerfile"
+              context = "."
+            }
+            customizations = {
+              vscode = {
+                extensions = try(var.development_container.vs_code_extensions, [])
+              }
+            }
+            containerEnv = try(var.development_container.env_vars, {})
+            forwardPorts = try(var.development_container.ports, [])
+            postCreateCommand = join(" && ", try(var.development_container.post_create_commands, []))
+            dockerComposeFile = try(var.development_container.docker_compose.enabled, false) ? "docker-compose.yml" : null
+            service = try(var.development_container.docker_compose.enabled, false) ? "app" : null
+            workspaceFolder = try(var.development_container.docker_compose.enabled, false) ? "/workspace" : null
+          })
+          description = "Development container configuration"
+        }
+      } : {},
+      // Docker Compose configuration if enabled
+      try(var.development_container.docker_compose.enabled, false) ? {
+        ".devcontainer/docker-compose.yml" = {
+          content = yamlencode({
+            version = "3.8"
+            services = merge({
+              app = {
+                build = {
+                  context = "."
+                  dockerfile = "Dockerfile"
+                }
+                volumes = [".:/workspace:cached"]
+                command = "sleep infinity"
+              }
+            }, try(var.development_container.docker_compose.services, {}))
+          })
+          description = "Docker Compose configuration for development"
+        }
+      } : {}
+    ) : path => file if file != null
+  }
 
   depends_on = [module.base_repo]
 }
@@ -105,7 +172,6 @@ resource "github_branch_protection" "base_repo" {
 
   repository_id = module.base_repo.github_repo.node_id
   pattern       = module.base_repo.default_branch
-
   enforce_admins          = try(local.base_repo_config.branch_protection.enforce_admins, true)
   required_linear_history = try(local.base_repo_config.branch_protection.required_linear_history, true)
   allows_force_pushes     = try(local.base_repo_config.branch_protection.allow_force_pushes, false)
@@ -126,19 +192,5 @@ resource "github_branch_protection" "base_repo" {
     }
   }
 
-  depends_on = [
-    github_repository_file.base_repo_files,
-    github_repository_file.base_repo_codeowners
-  ]
-}
-
-# Create initialization files in the base repository
-resource "github_repository_file" "base_files" {
-  for_each = local.repo_files
-
-  repository     = module.base_repo.github_repo.name
-  branch         = var.default_branch
-  file           = each.key
-  content        = each.value.content
-  commit_message = "Add ${each.value.description}"
+  depends_on = [module.base_repository_files]
 }

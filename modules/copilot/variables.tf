@@ -30,3 +30,9 @@ variable "github_pro_enabled" {
   type        = bool
   default     = false
 }
+
+variable "wait_for_repositories" {
+  description = "List of repository resources to wait for before creating files"
+  type        = any
+  default     = []
+}

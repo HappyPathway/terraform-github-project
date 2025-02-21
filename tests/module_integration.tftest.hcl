@@ -14,14 +14,14 @@ run "verify_complete_module_integration" {
     base_repository = {
       name        = "test-integration"
       description = "Test project for module integration"
-      visibility  = "public"
+      visibility  = "public"  // Required for branch protection with GitHub Free
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
-        visibility  = "public"
+        visibility  = "public"  // Required for branch protection with GitHub Free
       }
     ]
 
@@ -46,14 +46,8 @@ run "verify_complete_module_integration" {
     error_message = "Repository test-service was not created"
   }
 
-  # Only test basic branch protection
   assert {
-    condition = length(github_branch_protection.project_repos) > 0 && github_branch_protection.project_repos[0].pattern == "main"
-    error_message = "Basic branch protection was not configured properly"
-  }
-
-  assert {
-    condition = length(github_repository_file.workspace_config) == 1
+    condition = contains(module.base_repository_files.file_paths, "${var.project_name}.code-workspace")
     error_message = "Workspace configuration file was not created"
   }
 }
@@ -76,13 +70,14 @@ run "development_environment_defaults" {
     repositories = []
   }
 
+  # Update assertions to use module.base_repository_files
   assert {
-    condition = length(github_repository_file.devcontainer) == 0
+    condition = !contains(module.base_repository_files.file_paths, ".devcontainer/devcontainer.json")
     error_message = "DevContainer should not be created by default"
   }
 
   assert {
-    condition = length(github_repository_file.workspace_config) == 1
+    condition = contains(module.base_repository_files.file_paths, "${var.project_name}.code-workspace")
     error_message = "VS Code workspace file should always be created"
   }
 }

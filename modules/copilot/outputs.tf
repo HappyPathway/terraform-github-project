@@ -37,3 +37,8 @@ output "generated_instructions" {
   description = "Generated GitHub Copilot instructions based on repository analysis"
   value = local.generated_copilot_instructions
 }
+
+output "repository_files" {
+  description = "Map of repository file contents to be created"
+  value = local.repository_files
+}

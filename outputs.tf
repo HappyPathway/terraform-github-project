@@ -133,10 +133,8 @@ output "repositories" {
 output "base_repository_files" {
   description = "Files created in the base repository"
   value = {
-    managed_files = {
-      for path, file in github_repository_file.base_repo_files : path => file.content
-    }
-    codeowners = try(github_repository_file.base_repo_codeowners[0].content, null)
+    managed_files = module.base_repository_files.files
+    codeowners = try(module.base_repository_files.files["CODEOWNERS"].content, null)
   }
 }
 

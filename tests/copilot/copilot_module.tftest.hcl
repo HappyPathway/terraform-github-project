@@ -24,22 +24,22 @@ run "verify_language_detection" {
   }
 
   assert {
-    condition = contains(module.copilot.detected_languages, "python")
+    condition = contains(module.development.detected_languages, "python")
     error_message = "Should detect Python language from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_languages, "typescript")
+    condition = contains(module.development.detected_languages, "typescript")
     error_message = "Should detect TypeScript language from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_frameworks, "fastapi")
+    condition = contains(module.development.detected_frameworks, "fastapi")
     error_message = "Should detect FastAPI framework from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_frameworks, "react")
+    condition = contains(module.development.detected_frameworks, "react")
     error_message = "Should detect React framework from repository topics"
   }
 }
@@ -61,12 +61,12 @@ run "verify_testing_tools_detection" {
   }
 
   assert {
-    condition = contains(module.copilot.detected_testing_tools, "pytest")
+    condition = contains(module.development.detected_testing_tools, "pytest")
     error_message = "Should detect pytest from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_testing_tools, "jest")
+    condition = contains(module.development.detected_testing_tools, "jest")
     error_message = "Should detect jest from repository topics"
   }
 }
@@ -89,17 +89,17 @@ run "verify_infrastructure_detection" {
   }
 
   assert {
-    condition = contains(module.copilot.detected_iac_tools, "terraform")
+    condition = contains(module.development.detected_iac_tools, "terraform")
     error_message = "Should detect Terraform from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_iac_tools, "pulumi")
+    condition = contains(module.development.detected_iac_tools, "pulumi")
     error_message = "Should detect Pulumi from repository topics"
   }
 
   assert {
-    condition = contains(module.copilot.detected_cloud_providers, "aws")
+    condition = contains(module.development.detected_cloud_providers, "aws")
     error_message = "Should detect AWS from repository topics"
   }
 }
@@ -121,20 +121,19 @@ run "verify_file_creation" {
   }
 
   assert {
-    condition = github_repository_file.copilot_instructions["test-repo"].file == ".github/copilot-instructions.md"
+    condition = module.development.copilot_instructions["test-repo"].file == ".github/copilot-instructions.md"
     error_message = "Should create copilot instructions file in correct location"
   }
 
   assert {
-    condition = github_repository_file.repo_prompt["test-repo"].file == ".github/prompts/repo-setup.prompt.md"
+    condition = module.development.repo_prompt["test-repo"].file == ".github/prompts/repo-setup.prompt.md"
     error_message = "Should create repository prompt file in correct location"
   }
 
   assert {
-    condition = github_repository_file.repo_prompt["test-repo"].content == "Test repository for file creation"
+    condition = module.development.repo_prompt["test-repo"].content == "Test repository for file creation"
     error_message = "Should set correct content for repository prompt"
   }
-
 }
 
 run "verify_github_pro_handling" {
@@ -154,7 +153,7 @@ run "verify_github_pro_handling" {
   }
 
   assert {
-    condition = contains(module.copilot.copilot_instructions, "Branch protection requires public repositories or GitHub Pro")
+    condition = contains(module.development.github_pro_notices, "Branch protection requires public repositories or GitHub Pro")
     error_message = "Should include GitHub Pro limitation notice in instructions when not enabled"
   }
 }

@@ -89,34 +89,18 @@ ${join("\n", [for tool in concat(local.security_tools, local.linting_tools) : "-
 ## Testing Requirements
 Tests must not require GitHub Pro features.
 EOT
-}
 
-# Create copilot instruction files for each repository
-resource "github_repository_file" "copilot_instructions" {
-  for_each = { 
-    for repo in var.repositories : repo.name => repo
-    if lookup(repo, "enable_copilot", true)
+  # Map of repository file contents
+  repository_files = {
+    for repo in var.repositories : repo.name => {
+      copilot_instructions = {
+        path = ".github/prompts/copilot-setup.md"
+        content = local.copilot_instructions
+      }
+      repo_prompt = lookup(repo, "prompt", null) != null ? {
+        path = ".github/prompts/repo-setup.prompt.md"
+        content = repo.prompt
+      } : null
+    }
   }
-  
-  repository          = each.key
-  branch             = try(each.value.github_default_branch, "main")
-  file               = ".github/prompts/copilot-setup.md"
-  content            = local.copilot_instructions
-  commit_message     = "Add GitHub Copilot setup instructions"
-  overwrite_on_create = true
-}
-
-# Create prompt files for each repository
-resource "github_repository_file" "repo_prompt" {
-  for_each = { 
-    for repo in var.repositories : repo.name => repo 
-    if lookup(repo, "prompt", null) != null
-  }
-
-  repository          = each.key
-  branch             = try(each.value.github_default_branch, "main")
-  file               = ".github/prompts/repo-setup.prompt.md"
-  content            = each.value.prompt
-  commit_message     = "Update repository prompt"
-  overwrite_on_create = true
 }

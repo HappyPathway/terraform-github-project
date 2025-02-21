@@ -11,6 +11,12 @@
 		},
 		{
 			"path": "../github-projects"
+		},
+		{
+			"path": "../docs/terraform/website/docs/language/tests"
+		},
+		{
+			"path": "../docs/terraform/website/docs/language/modules"
 		}
 	],
 	"settings": {}

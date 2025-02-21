@@ -40,9 +40,13 @@ mock_resource "github_branch_protection" {
 
 mock_resource "github_repository_file" {
   defaults = {
+    repository = "test-dev-env"
+    file = ".github/placeholder.md"
+    content = "default content"
     commit_message = "Managed by Terraform"
     commit_author = "Terraform"
     commit_email = "terraform@example.com"
     overwrite_on_create = true
+    branch = "main"
   }
 }

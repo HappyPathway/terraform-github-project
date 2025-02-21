@@ -323,9 +323,17 @@ variable "infrastructure_config" {
   default = {}
 }
 
+variable "github_pro_enabled" {
+  description = "Set to true if you have GitHub Pro subscription. Some features like branch protection on private repositories require GitHub Pro."
+  type        = bool
+  default     = false
+}
+
 variable "quality_config" {
   description = "Configuration for code quality module including linting and documentation requirements"
   type = object({
+    enable_code_scanning = optional(bool, true)
+    code_quality_tools = optional(list(string), [])
     linting_required = optional(bool, true)
     type_safety = optional(bool, true)
     documentation_required = optional(bool, true)
@@ -336,8 +344,8 @@ variable "quality_config" {
   default = {}
 }
 
-variable "github_pro_enabled" {
-  description = "Set to true if you have GitHub Pro subscription. Some features like branch protection on private repositories require GitHub Pro."
-  type        = bool
-  default     = false
+variable "project_owners" {
+  description = "List of GitHub usernames that are owners of the project"
+  type        = list(string)
+  default     = []
 }
