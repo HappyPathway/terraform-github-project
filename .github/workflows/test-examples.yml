@@ -1,0 +1,65 @@
+name: Test Examples
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'examples/**'
+      - '.github/workflows/test-examples.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'examples/**'
+      - '.github/workflows/test-examples.yml'
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  GITHUB_ORG: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
+  GITHUB_OWNER: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
+  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+jobs:
+  test-examples:
+    name: Test Example ${{ matrix.example }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - django-app
+          - java-microservices
+          - minimal
+          - multi-tier-webapp
+          - python-service
+          - terraform-workspace
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Setup Git Config
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+      - name: Create Terraform Variables
+        working-directory: examples/${{ matrix.example }}
+        run: |
+          cat > terraform.tfvars <<EOF
+          repo_org = "$GITHUB_ORG"
+          project_name = "example-${{ matrix.example }}"
+          project_prompt = "Example project for testing ${{ matrix.example }} configuration"
+          EOF
+
+      - name: Terraform Init and Apply
+        working-directory: examples/${{ matrix.example }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          terraform init
+          terraform apply -auto-approve

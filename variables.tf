@@ -123,31 +123,31 @@ variable "base_repository" {
   description = "Configuration for the base repository. This repository serves as the foundation for the project and contains shared configurations."
   type = object({
     # Core settings
-    description            = optional(string)
-    homepage_url           = optional(string)
-    topics                 = optional(list(string), ["project-base"])
-    visibility             = optional(string, "private")
-    has_issues            = optional(bool, true)
-    has_wiki              = optional(bool, true)
-    has_projects          = optional(bool, true)
-    has_discussions       = optional(bool, false)
-    has_downloads         = optional(bool, false)
-    
+    description     = optional(string)
+    homepage_url    = optional(string)
+    topics          = optional(list(string), ["project-base"])
+    visibility      = optional(string, "private")
+    has_issues      = optional(bool, true)
+    has_wiki        = optional(bool, true)
+    has_projects    = optional(bool, true)
+    has_discussions = optional(bool, false)
+    has_downloads   = optional(bool, false)
+
     # Git settings
-    default_branch         = optional(string, "main")
-    allow_merge_commit     = optional(bool, false)
-    allow_squash_merge     = optional(bool, true)
-    allow_rebase_merge     = optional(bool, false)
-    allow_auto_merge      = optional(bool, false)
-    delete_branch_on_merge = optional(bool, true)
-    allow_update_branch   = optional(bool, true)
-    merge_commit_title    = optional(string, "MERGE_MESSAGE")
-    merge_commit_message  = optional(string, "PR_TITLE")
-    squash_merge_commit_title = optional(string, "COMMIT_OR_PR_TITLE")
+    default_branch              = optional(string, "main")
+    allow_merge_commit          = optional(bool, false)
+    allow_squash_merge          = optional(bool, true)
+    allow_rebase_merge          = optional(bool, false)
+    allow_auto_merge            = optional(bool, false)
+    delete_branch_on_merge      = optional(bool, true)
+    allow_update_branch         = optional(bool, true)
+    merge_commit_title          = optional(string, "MERGE_MESSAGE")
+    merge_commit_message        = optional(string, "PR_TITLE")
+    squash_merge_commit_title   = optional(string, "COMMIT_OR_PR_TITLE")
     squash_merge_commit_message = optional(string, "COMMIT_MESSAGES")
-    
+
     # Security settings
-    vulnerability_alerts   = optional(bool, true)
+    vulnerability_alerts = optional(bool, true)
     security_and_analysis = optional(object({
       advanced_security = optional(object({
         status = string
@@ -160,68 +160,68 @@ variable "base_repository" {
       }))
     }))
     require_signed_commits = optional(bool, false)
-    
+
     # Protection settings
-    enable_branch_protection = optional(bool, true)
-    enforce_prs             = optional(bool, true)
+    enable_branch_protection = optional(bool, false)
+    enforce_prs              = optional(bool, false)
     branch_protection = optional(object({
-      enforce_admins                = optional(bool, true)
-      required_linear_history      = optional(bool, true)
-      allow_force_pushes           = optional(bool, false)
-      allow_deletions             = optional(bool, false)
+      enforce_admins                  = optional(bool, true)
+      required_linear_history         = optional(bool, true)
+      allow_force_pushes              = optional(bool, false)
+      allow_deletions                 = optional(bool, false)
       require_conversation_resolution = optional(bool, true)
       required_approving_review_count = optional(number, 1)
-      dismiss_stale_reviews        = optional(bool, true)
-      require_code_owner_reviews   = optional(bool, true)
-      required_status_checks      = optional(object({
-        strict = optional(bool, true)
+      dismiss_stale_reviews           = optional(bool, true)
+      require_code_owner_reviews      = optional(bool, true)
+      required_status_checks = optional(object({
+        strict   = optional(bool, true)
         contexts = optional(list(string), [])
       }))
     }))
     pull_request_bypassers = optional(list(string), [])
-    
+
     # File management
-    gitignore_template     = optional(string)
-    license_template       = optional(string)
-    codeowners            = optional(list(string), [])
-    create_codeowners     = optional(bool, true)
-    extra_files           = optional(list(object({
+    gitignore_template = optional(string)
+    license_template   = optional(string)
+    codeowners         = optional(list(string), [])
+    create_codeowners  = optional(bool, true)
+    extra_files = optional(list(object({
       path    = string
       content = string
     })), [])
-    managed_extra_files   = optional(list(object({
+    managed_extra_files = optional(list(object({
       path    = string
       content = string
     })))
-    allow_unsigned_files  = optional(bool, false)
+    allow_unsigned_files = optional(bool, false)
     commit_author        = optional(string, "Terraform")
-    commit_email         = optional(string, "terraform@example.com")
-    
+    commit_email         = optional(string, "terraform@roknsound.com")
+
     # Access control
-    admin_teams           = optional(list(string), [])
-    push_teams            = optional(list(string), [])
-    maintain_teams        = optional(list(string), [])
-    pull_teams            = optional(list(string), [])
-    triage_teams          = optional(list(string), [])
-    collaborators         = optional(map(string), {})
-    github_org_teams      = optional(list(any))
-    
+    admin_teams      = optional(list(string), [])
+    push_teams       = optional(list(string), [])
+    maintain_teams   = optional(list(string), [])
+    pull_teams       = optional(list(string), [])
+    triage_teams     = optional(list(string), [])
+    collaborators    = optional(map(string), {})
+    github_org_teams = optional(list(any))
+
     # Additional settings
     template = optional(object({
-      owner = string
+      owner      = string
       repository = string
     }))
     pages = optional(object({
       branch = string
-      path = optional(string, "/")
-      cname = optional(string)
+      path   = optional(string, "/")
+      cname  = optional(string)
     }))
-    archived              = optional(bool, false)
-    archive_on_destroy    = optional(bool, true)
-    create_repo           = optional(bool, true)
-    prefix               = optional(string)
-    force_name           = optional(bool, false)
-    is_template          = optional(bool, false)
+    archived           = optional(bool, false)
+    archive_on_destroy = optional(bool, true)
+    create_repo        = optional(bool, true)
+    prefix             = optional(string)
+    force_name         = optional(bool, false)
+    is_template        = optional(bool, false)
   })
   default = {}
 }

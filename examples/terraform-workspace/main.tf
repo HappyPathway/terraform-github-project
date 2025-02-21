@@ -1,3 +1,16 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/terraform-workspace"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "terraform_workspace" {
   source = "../../"
 
@@ -11,6 +24,7 @@ module "terraform_workspace" {
       description = "Core AWS platform configuration"
       topics      = ["terraform", "aws", "infrastructure"]
       gitignore_template = "Terraform"
+      github_is_private = false
       prompt      = "Core AWS platform including VPC, networking, and shared services"
       branch_protection = {
         required_status_checks = {
@@ -34,6 +48,7 @@ module "terraform_workspace" {
       topics      = ["terraform", "aws", "eks", "kubernetes"]
       gitignore_template = "Terraform"
       prompt      = "Reusable module for EKS cluster deployment with best practices"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-fmt", "terraform-docs", "tflint"]
@@ -46,6 +61,7 @@ module "terraform_workspace" {
       topics      = ["terraform", "aws", "rds", "database"]
       gitignore_template = "Terraform"
       prompt      = "Reusable module for RDS database deployment with security best practices"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-fmt", "terraform-docs", "tflint"]
@@ -58,6 +74,7 @@ module "terraform_workspace" {
       topics      = ["terraform", "aws", "environments"]
       gitignore_template = "Terraform"
       prompt      = "Environment-specific Terraform configurations for development, staging, and production"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-plan"]
@@ -70,6 +87,7 @@ module "terraform_workspace" {
   base_repository = {
     description = "AWS Platform Infrastructure"
     topics      = ["project-base", "terraform", "aws", "infrastructure"]
+    visibility  = "public"
     branch_protection = {
       required_linear_history = true
       required_status_checks = {
@@ -86,7 +104,7 @@ module "terraform_workspace" {
     extra_files = [
       {
         path    = ".terraform-docs.yml"
-        content = file("".terraform-docs.yml")
+        content = file("${path.module}/terraform-docs.yml")
       }
     ]
   }

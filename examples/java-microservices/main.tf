@@ -1,8 +1,22 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/java-microservices"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
+
 module "java_microservices" {
   source = "../../"
 
   project_name    = "retail-platform"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "Java Spring Boot microservices platform for retail operations"
 
   repositories = [
@@ -12,6 +26,7 @@ module "java_microservices" {
       topics      = ["java", "spring-boot", "microservice"]
       gitignore_template = "Java"
       prompt      = "Spring Boot microservice managing product catalog"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           strict = true
@@ -20,11 +35,6 @@ module "java_microservices" {
         require_code_owner_reviews = true
         required_approving_review_count = 2
       }
-      security_and_analysis = {
-        advanced_security = {
-          status = "enabled"
-        }
-      }
     },
     {
       name        = "order-service"
@@ -32,6 +42,7 @@ module "java_microservices" {
       topics      = ["java", "spring-boot", "microservice"]
       gitignore_template = "Java"
       prompt      = "Spring Boot microservice for order processing"
+      github_is_private = false
       branch_protection = {
         required_status_checks = {
           contexts = ["maven-build", "integration-tests"]
@@ -44,6 +55,7 @@ module "java_microservices" {
       topics      = ["java", "spring-cloud-gateway"]
       gitignore_template = "Java"
       prompt      = "Spring Cloud Gateway service for routing and cross-cutting concerns"
+      github_is_private = false
     },
     {
       name        = "shared-library"
@@ -52,25 +64,19 @@ module "java_microservices" {
       gitignore_template = "Java"
       prompt      = "Shared Java library for common utilities and domain models"
       is_template = false
+      github_is_private = false
     }
   ]
 
   base_repository = {
     description = "Retail Platform Microservices"
     topics      = ["project-base", "java", "spring-boot", "microservices"]
+    visibility  = "public"
     branch_protection = {
       required_linear_history = true
       require_code_owner_reviews = true
       required_approving_review_count = 2
       dismiss_stale_reviews = true
-    }
-    security_and_analysis = {
-      advanced_security = {
-        status = "enabled"
-      }
-      secret_scanning = {
-        status = "enabled"
-      }
     }
   }
 

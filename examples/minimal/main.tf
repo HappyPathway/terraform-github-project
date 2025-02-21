@@ -1,9 +1,22 @@
+terraform {
+  backend "gcs" {
+    bucket = "hpw-terraform-state"
+    prefix = "github-projects/minimal"
+  }
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+    }
+  }
+}
+
 module "github_project" {
   source = "../../"
 
   # Required parameters
   project_name    = "my-project"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "This is the main project prompt that will be used across repos"
 
   # Example repositories showing both public and private configs
@@ -22,5 +35,7 @@ module "github_project" {
   ]
 
   # Base repository configuration - will be public by default
-  base_repository = {}
+  base_repository = {
+    description = "Main project repository"
+  }
 }
