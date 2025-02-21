@@ -5,96 +5,81 @@ locals {
 }
 
 module "project_repos" {
-  source   = "HappyPathway/repo/github"
-  for_each = { for name, repo in local.project_repositories : name => repo if try(repo.create_repo, true) }
+  source = "HappyPathway/repo/github"
+  for_each = { 
+    for name, repo in local.processed_repos : name => repo 
+    if repo.create_repo 
+  }
 
   # Basic repository settings
   name       = each.key
   repo_org   = coalesce(each.value.repo_org, var.repo_org)
-  force_name = try(each.value.force_name, false)
+  force_name = each.value.force_name
 
-  # Repository configuration
+  # Repository configuration 
   create_repo             = true
-  # Only enable branch protection for public repos or if explicitly set
-  enforce_prs             = try(each.value.visibility, "public") == "public" ? try(each.value.enable_branch_protection, true) : false
-  github_repo_description = try(each.value.description, "Repository for ${var.project_name} project")
-  github_repo_topics      = try(each.value.topics, [])
-  github_is_private       = try(each.value.visibility, "public") == "private"
-  github_has_issues       = try(each.value.has_issues, true)
-  github_has_wiki         = try(each.value.has_wiki, true)
-  github_has_projects     = try(each.value.has_projects, true)
-  github_has_discussions  = try(each.value.has_discussions, false)
-  github_has_downloads    = try(each.value.has_downloads, false)
+  enforce_prs             = each.value.visibility == "public" || each.value.force_branch_protection
+  github_repo_description = coalesce(each.value.description, "Repository for ${var.project_name} project")
+  github_repo_topics      = each.value.topics
+  github_is_private       = each.value.visibility == "private"
 
-  # Git settings
-  github_default_branch         = try(each.value.default_branch, var.default_branch)
-  github_allow_merge_commit     = try(each.value.allow_merge_commit, true)
-  github_allow_squash_merge     = try(each.value.allow_squash_merge, true)
-  github_allow_rebase_merge     = try(each.value.allow_rebase_merge, true)
-  github_allow_auto_merge       = try(each.value.allow_auto_merge, false)
-  github_delete_branch_on_merge = try(each.value.delete_branch_on_merge, true)
-  github_allow_update_branch    = try(each.value.allow_update_branch, true)
+  # Feature flags
+  github_has_issues      = each.value.has_issues
+  github_has_wiki        = each.value.has_wiki
+  github_has_projects    = each.value.has_projects
+  github_has_discussions = each.value.has_discussions
+  github_has_downloads   = each.value.has_downloads
+  github_default_branch  = each.value.default_branch
 
   # File management
-  extra_files = try(each.value.extra_files, [])
-  managed_extra_files = concat(
-    coalesce(each.value.managed_extra_files, []),
-    [
-      {
-        path = "${each.key}-${var.project_name}-prompt.md"
-        content = coalesce(
-          try(each.value.prompt, null),
-          try(each.value.description, null),
-          "${local.default_prompt_content} for ${each.key}"
-        )
-      }
-    ],
-    # Add warning file for private repos about branch protection limitations
-    try(each.value.visibility, "public") == "private" ? [
-      {
-        path    = ".github/FREE_TIER_LIMITATIONS.md"
-        content = templatefile("${path.module}/templates/github_free_limitations.md.tpl", {
-          repo_visibility = "private"
-        })
-      }
-    ] : []
-  )
+  extra_files = each.value.extra_files
+  managed_extra_files = each.value.visibility == "private" ? concat(
+    coalesce(try(each.value.managed_extra_files, []), []),
+    [{
+      path = ".github/FREE_TIER_LIMITATIONS.md"
+      content = templatefile("${path.module}/templates/github_free_limitations.md.tpl", {
+        repo_name = each.key
+        limitations = [
+          "Branch protection rules are only available for public repositories",
+          "Advanced security features are limited",
+          "Private repository features require GitHub Pro or higher"
+        ]
+      })
+    }]
+  ) : coalesce(try(each.value.managed_extra_files, []), [])
 
   # Teams and access control
-  admin_teams      = try(each.value.admin_teams, [])
-  github_org_teams = try(each.value.github_org_teams, {})
+  admin_teams = each.value.admin_teams
+  github_org_teams = each.value.github_org_teams
 
-  # Additional settings
-  archived              = try(each.value.archived, false)
-  archive_on_destroy    = try(each.value.archive_on_destroy, true)
-  vulnerability_alerts  = try(each.value.vulnerability_alerts, true)
-  gitignore_template    = try(each.value.gitignore_template, null)
-  license_template      = try(each.value.license_template, null)
-  homepage_url          = try(each.value.homepage_url, null)
-  security_and_analysis = try(each.value.security_and_analysis, null)
+  # Branch protection settings - only applied for public repos or when forced
+  github_enforce_admins_branch_protection = (each.value.visibility == "public" || each.value.force_branch_protection) ? try(each.value.branch_protection.enforce_admins, true) : false
+  github_dismiss_stale_reviews = (each.value.visibility == "public" || each.value.force_branch_protection) ? try(each.value.branch_protection.dismiss_stale_reviews, true) : false
+  github_require_code_owner_reviews = (each.value.visibility == "public" || each.value.force_branch_protection) ? try(each.value.branch_protection.require_code_owner_reviews, true) : false
+  github_required_approving_review_count = (each.value.visibility == "public" || each.value.force_branch_protection) ? try(each.value.branch_protection.required_approving_review_count, 1) : 0
 
-  # Template configuration if specified
-  template_repo     = try(each.value.template.repository, null)
+  # Other settings passed through
+  template_repo = try(each.value.template.repository, null)
   template_repo_org = try(each.value.template.owner, null)
-
-  depends_on = [module.base_repo]
 }
 
 # Branch protection for project repositories
 resource "github_branch_protection" "project_repos" {
   for_each = {
-    for name, repo in local.project_repositories : name => repo
-    if try(repo.create_repo, true) && try(repo.enable_branch_protection, true)
+    for name, repo in local.processed_repos : name => repo
+    if repo.create_repo && 
+       repo.enable_branch_protection && 
+       (repo.visibility == "public" || repo.force_branch_protection)
   }
 
   repository_id = module.project_repos[each.key].github_repo.node_id
-  pattern       = try(each.value.default_branch, var.default_branch)
+  pattern       = each.value.default_branch
 
   enforce_admins          = try(each.value.branch_protection.enforce_admins, true)
   required_linear_history = try(each.value.branch_protection.required_linear_history, true)
   allows_force_pushes     = try(each.value.branch_protection.allow_force_pushes, false)
   allows_deletions        = try(each.value.branch_protection.allow_deletions, false)
-  require_signed_commits  = try(each.value.require_signed_commits, false)
+  require_signed_commits  = each.value.require_signed_commits
 
   required_pull_request_reviews {
     dismiss_stale_reviews           = try(each.value.branch_protection.dismiss_stale_reviews, true)

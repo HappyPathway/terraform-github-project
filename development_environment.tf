@@ -45,8 +45,8 @@ resource "github_repository_file" "docker_compose" {
   depends_on          = [module.project_repos]
 }
 
+# Create workspace configuration file
 resource "github_repository_file" "workspace_config" {
-  count      = 1 # Always create the workspace file
   repository = module.base_repo.github_repo.name
   branch     = module.base_repo.default_branch
   file       = "${var.project_name}.code-workspace"

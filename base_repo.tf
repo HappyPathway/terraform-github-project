@@ -1,59 +1,64 @@
-# Create base repository without branch protection or files initially
+locals {
+  # Normalize base repository configuration
+  base_repository = {
+    name = var.project_name
+    description = try(var.base_repository.description, "Base repository for ${var.project_name}")
+    visibility = try(var.base_repository.visibility, "public")  # Changed default to public
+    force_branch_protection = try(var.base_repository.force_branch_protection, false)
+    enable_branch_protection = try(var.base_repository.enable_branch_protection, true)
+    topics = try(var.base_repository.topics, [])
+    github_org_teams = try(var.base_repository.github_org_teams, [])
+    admin_teams = try(var.base_repository.admin_teams, [])
+    extra_files = try(var.base_repository.extra_files, [])
+    managed_extra_files = try(var.base_repository.managed_extra_files, [])
+    create_repo = try(var.base_repository.create_repo, true)
+    create_codeowners = try(var.base_repository.create_codeowners, true)
+  }
+}
+
 module "base_repo" {
   source = "HappyPathway/repo/github"
 
-  # Ensure required parameters are set
-  name       = var.project_name
-  repo_org   = var.repo_org
-  force_name = true # Prevent date suffix
+  name = local.base_repository.name
+  repo_org = var.repo_org
 
-  # Basic repository settings
-  create_repo             = true
-  enforce_prs             = false # Disable branch protection initially
+  # Repository configuration
+  create_repo = local.base_repository.create_repo
+  enforce_prs = local.base_repository.visibility == "public" || local.base_repository.force_branch_protection
+  github_is_private = local.base_repository.visibility == "private"
   github_repo_description = local.base_repository.description
-  github_repo_topics      = local.base_repository.topics
-  github_is_private       = local.base_repository.visibility == "private"
-  github_has_issues       = local.base_repository.has_issues
-  github_has_wiki         = local.base_repository.has_wiki
-  github_has_projects     = local.base_repository.has_projects
-  github_has_discussions  = local.base_repository.has_discussions
-  github_has_downloads    = local.base_repository.has_downloads
+  github_repo_topics = local.base_repository.topics
 
-  # Git settings
-  github_default_branch         = local.base_repository.default_branch
-  github_allow_merge_commit     = local.base_repository.allow_merge_commit
-  github_allow_squash_merge     = local.base_repository.allow_squash_merge
-  github_allow_rebase_merge     = local.base_repository.allow_rebase_merge
-  github_allow_auto_merge       = local.base_repository.allow_auto_merge
-  github_delete_branch_on_merge = local.base_repository.delete_branch_on_merge
-  github_allow_update_branch    = local.base_repository.allow_update_branch
-
-  # Don't manage files in the module
-  extra_files         = []
-  managed_extra_files = []
+  # File management
+  extra_files = local.base_repository.extra_files
+  managed_extra_files = concat(
+    [],  # Start with empty list to ensure we always have a valid list
+    coalesce(try(local.base_repository.managed_extra_files, []), []),
+    local.base_repository.visibility == "private" ? [{
+      path = ".github/FREE_TIER_LIMITATIONS.md"
+      content = file("${path.module}/templates/github_free_limitations.md.tpl")
+    }] : []
+  )
 
   # Teams and access control
-  admin_teams      = local.base_repository.admin_teams
+  admin_teams = local.base_repository.admin_teams
   github_org_teams = local.base_repository.github_org_teams
 
-  # Additional settings
-  archived              = local.base_repository.archived
-  archive_on_destroy    = local.base_repository.archive_on_destroy
-  vulnerability_alerts  = local.base_repository.vulnerability_alerts
-  gitignore_template    = local.base_repository.gitignore_template
-  license_template      = local.base_repository.license_template
-  homepage_url          = local.base_repository.homepage_url
-  security_and_analysis = local.base_repository.security_and_analysis
+  # Branch protection settings - only applied for public repos or when forced
+  github_enforce_admins_branch_protection = (local.base_repository.visibility == "public" || local.base_repository.force_branch_protection) ? try(local.base_repository.branch_protection.enforce_admins, true) : false
+  github_dismiss_stale_reviews = (local.base_repository.visibility == "public" || local.base_repository.force_branch_protection) ? try(local.base_repository.branch_protection.dismiss_stale_reviews, true) : false
+  github_require_code_owner_reviews = (local.base_repository.visibility == "public" || local.base_repository.force_branch_protection) ? try(local.base_repository.branch_protection.require_code_owner_reviews, true) : false
+  github_required_approving_review_count = (local.base_repository.visibility == "public" || local.base_repository.force_branch_protection) ? try(local.base_repository.branch_protection.required_approving_review_count, 1) : 0
 
-  # Source template if specified
-  template_repo     = try(local.base_repository.template.repository, null)
-  template_repo_org = try(local.base_repository.template.owner, null)
+  # Other settings passed through
+  template_repo = try(var.base_repository.template.repository, null)
+  template_repo_org = try(var.base_repository.template.owner, null)
 }
 
 # Create repository files
 resource "github_repository_file" "base_repo_files" {
   for_each = {
-    for file in local.base_repository.managed_extra_files :
+    for file in coalesce(local.base_repository.managed_extra_files, []) :
     file.path => file
   }
 
@@ -67,7 +72,7 @@ resource "github_repository_file" "base_repo_files" {
   depends_on = [module.base_repo]
 }
 
-# Add CODEOWNERS file
+# Add CODEOWNERS file if enabled
 resource "github_repository_file" "base_repo_codeowners" {
   count = local.base_repository.create_codeowners ? 1 : 0
 
@@ -75,10 +80,10 @@ resource "github_repository_file" "base_repo_codeowners" {
   branch     = module.base_repo.default_branch
   file       = "CODEOWNERS"
   content = templatefile("${path.module}/templates/CODEOWNERS", {
-    codeowners = concat(
+    codeowners = distinct(concat(
       try(local.base_repository.codeowners, []),
       formatlist("* @%s", try(local.base_repository.admin_teams, []))
-    )
+    ))
   })
   commit_message      = "Add CODEOWNERS file"
   overwrite_on_create = true
@@ -88,22 +93,20 @@ resource "github_repository_file" "base_repo_codeowners" {
 
 # Add branch protection after files are created
 resource "github_branch_protection" "base_repo" {
-  # Only create branch protection if repo is public or explicitly enabled
-  count = (local.base_repository.visibility == "public" || try(local.base_repository.force_branch_protection, false)) && local.base_repository.enable_branch_protection ? 1 : 0
+  count = (local.base_repository.visibility == "public" || local.base_repository.force_branch_protection) && local.base_repository.enable_branch_protection ? 1 : 0
 
   repository_id = module.base_repo.github_repo.node_id
   pattern       = module.base_repo.default_branch
 
   enforce_admins          = local.base_repository.branch_protection.enforce_admins
-  required_linear_history = local.base_repository.branch_protection.required_linear_history
+  required_linear_history = local.base_repository.branch_protection.required_linear_history 
   allows_force_pushes     = try(local.base_repository.branch_protection.allow_force_pushes, false)
   allows_deletions        = try(local.base_repository.branch_protection.allow_deletions, false)
-  require_signed_commits  = try(local.base_repository.require_signed_commits, false)
 
   required_pull_request_reviews {
-    dismiss_stale_reviews           = local.base_repository.branch_protection.dismiss_stale_reviews
-    require_code_owner_reviews      = local.base_repository.branch_protection.require_code_owner_reviews
-    required_approving_review_count = local.base_repository.branch_protection.required_approving_review_count
+    dismiss_stale_reviews = try(local.base_repository.branch_protection.dismiss_stale_reviews, true)
+    require_code_owner_reviews = try(local.base_repository.branch_protection.require_code_owner_reviews, true)
+    required_approving_review_count = try(local.base_repository.branch_protection.required_approving_review_count, 1)
   }
 
   dynamic "required_status_checks" {
@@ -115,7 +118,7 @@ resource "github_branch_protection" "base_repo" {
   }
 
   depends_on = [
-    github_repository_file.base_repo_files,
+    module.base_repo,
     github_repository_file.base_repo_codeowners
   ]
 }

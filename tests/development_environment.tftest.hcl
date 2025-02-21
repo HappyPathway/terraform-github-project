@@ -104,42 +104,28 @@ run "validate_workspace_config" {
 
   variables {
     project_name = "test-dev-env"
-    repo_org     = "test-org"
-    project_prompt = "This is a test project for development environment configuration"
-
+    repo_org = "test-org"
+    project_prompt = "Test project configuration"
+    repositories = []
     base_repository = {
-      name        = "test-dev-env"
+      name = "test-dev-env"
       description = "Test project for development environment"
-    }
-
-    repositories = [
-      {
-        name        = "test-service"
-        description = "Test service repository"
-      }
-    ]
-
-    vs_code_workspace = {
-      settings = {
-        "editor.formatOnSave": true
-      }
-      extensions = {
-        recommended = ["ms-python.python"]
-        required = ["github.copilot"]
-      }
-      tasks = [
-        {
-          name = "Test Task"
-          command = "echo 'test'"
-          group = "test"
-        }
-      ]
     }
   }
 
   assert {
-    condition = github_repository_file.workspace_config[0].file == "${var.project_name}.code-workspace"
-    error_message = "Workspace configuration file was not created with correct name"
+    condition = github_repository_file.workspace_config.file == "${var.project_name}.code-workspace"
+    error_message = "Workspace file should have correct name"
+  }
+
+  assert {
+    condition = github_repository_file.workspace_config.branch == module.base_repo.default_branch
+    error_message = "Workspace file should be created in default branch"
+  }
+
+  assert {
+    condition = github_repository_file.workspace_config.repository == module.base_repo.github_repo.name
+    error_message = "Workspace file should be created in base repository"
   }
 }
 
@@ -180,38 +166,16 @@ run "development_features_disabled_by_default" {
 }
 
 run "workspace_file_always_created" {
-  command = plan
+  command = apply
 
   variables {
     project_name = "test-dev-env"
-    repo_org     = "test-org"
-    project_prompt = "test prompt for testing development environment configuration"
-    base_repository = {
-      name        = "test-dev-env"
-      description = "Test project for development environment"
-    }
-
-    repositories = [
-      {
-        name        = "test-service"
-        description = "Test service repository"
-      }
-    ]
+    repositories = []
   }
 
   assert {
-    condition     = length(github_repository_file.workspace_config) == 1
-    error_message = "VS Code workspace file should always be created in base repository"
-  }
-
-  assert {
-    condition     = github_repository_file.workspace_config[0].file == "test-dev-env.code-workspace"
-    error_message = "VS Code workspace file should have correct name"
-  }
-
-  assert {
-    condition     = github_repository_file.workspace_config[0].repository == "test-dev-env"
-    error_message = "VS Code workspace file should be created in base repository"
+    condition     = github_repository_file.workspace_config.repository == "test-dev-env"
+    error_message = "Workspace file should be created in base repository"
   }
 }
 
