@@ -1,4 +1,6 @@
-provider "github" {}
+mock_provider "github" {
+  source = "./mocks/github.tfmock.hcl"
+}
 
 run "development_environment_configuration" {
   command = plan
@@ -6,17 +8,20 @@ run "development_environment_configuration" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
 
@@ -57,17 +62,20 @@ run "validate_devcontainer_files" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
 
@@ -105,17 +113,20 @@ run "validate_workspace_config" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "This is a test project for development environment configuration"
 
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
 
@@ -149,16 +160,19 @@ run "development_features_disabled_by_default" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
   }
@@ -185,16 +199,19 @@ run "workspace_file_always_created" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
   }
@@ -221,16 +238,19 @@ run "workspace_file_settings" {
   variables {
     project_name = "test-dev-env"
     repo_org     = "test-org"
+    github_pro_enabled = false
     project_prompt = "test prompt for testing development environment configuration"
     base_repository = {
       name        = "test-dev-env"
       description = "Test project for development environment"
+      visibility  = "public"
     }
 
     repositories = [
       {
         name        = "test-service"
         description = "Test service repository"
+        visibility  = "public"
       }
     ]
 

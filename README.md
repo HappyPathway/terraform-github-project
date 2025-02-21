@@ -1,4 +1,140 @@
-# Terraform GitHub Project Module
+# Terraform GitHub Project
+
+A Terraform module for managing GitHub projects with standardized configurations for security, development, infrastructure, and code quality.
+
+## New Modular Structure
+
+The module has been reorganized into focused submodules to improve maintainability and testing:
+
+```
+modules/
+  ├── security/          # Security and compliance configuration
+  ├── development/       # Development standards and deployment
+  ├── infrastructure/    # Infrastructure patterns and IaC
+  └── quality/          # Code quality and standards
+```
+
+## Migration Guide
+
+### For Existing Users
+
+If you're using version 1.x, follow these steps to migrate:
+
+1. Update your module source to reference version 2.0
+2. Review the module-specific documentation:
+   - [Security Module](modules/security/README.md)
+   - [Development Module](modules/development/README.md)
+   - [Infrastructure Module](modules/infrastructure/README.md)
+   - [Quality Module](modules/quality/README.md)
+3. Update your module configuration according to the new structure
+
+### Breaking Changes
+
+- Local variables have been moved to their respective modules
+- Some variable names have been standardized across modules
+- Configuration structure has been modularized
+
+### Example Migration
+
+Before:
+```hcl
+module "github_project" {
+  source = "path/to/module"
+
+  repositories = [
+    {
+      name = "app"
+      github_repo_topics = ["docker", "terraform"]
+    }
+  ]
+}
+```
+
+After:
+```hcl
+module "github_project" {
+  source = "path/to/module"
+
+  repositories = [
+    {
+      name = "app"
+      github_repo_topics = ["docker", "terraform"]
+    }
+  ]
+
+  # New modular configuration
+  security_config = {
+    enable_security_scanning = true
+    container_security_config = {
+      scanning_tools = ["trivy"]
+    }
+  }
+
+  development_config = {
+    testing_requirements = {
+      required = true
+    }
+  }
+
+  infrastructure_config = {
+    iac_tools = ["terraform"]
+  }
+
+  quality_config = {
+    linting_required = true
+  }
+}
+```
+
+## Modules
+
+### Security Module
+Manages security configurations including:
+- Container security
+- Network security
+- Compliance requirements
+
+### Development Module
+Handles development standards including:
+- Programming languages and frameworks
+- Testing requirements
+- Deployment patterns
+
+### Infrastructure Module
+Manages infrastructure patterns including:
+- IaC tool configuration
+- Cloud provider settings
+- Module development standards
+
+### Quality Module
+Enforces code quality standards including:
+- Linting requirements
+- Type safety
+- Documentation standards
+
+## Testing
+
+Each module includes its own test suite:
+```
+tests/
+  ├── security/
+  ├── development/
+  ├── infrastructure/
+  └── quality/
+```
+
+Run tests with:
+```bash
+terraform test
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 [![Terraform Validation](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform.yaml)
 [![Terraform Doc](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml/badge.svg)](https://github.com/HappyPathway/terraform-github-project/actions/workflows/terraform-doc.yaml)

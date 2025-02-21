@@ -60,3 +60,44 @@ locals {
     ], var.base_repository.managed_extra_files != null ? var.base_repository.managed_extra_files : [])
   }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
+
+module "security" {
+  source = "./modules/security"
+
+  repositories = var.repositories
+  enable_security_scanning = try(var.security_config.enable_security_scanning, true)
+  security_frameworks = try(var.security_config.security_frameworks, [])
+  container_security_config = try(var.security_config.container_security_config, {})
+}
+
+module "development" {
+  source = "./modules/development"
+
+  repositories = var.repositories
+  testing_requirements = try(var.development_config.testing_requirements, {})
+  ci_cd_config = try(var.development_config.ci_cd_config, {})
+}
+
+module "infrastructure" {
+  source = "./modules/infrastructure"
+
+  repositories = var.repositories
+  iac_config = try(var.infrastructure_config.iac_config, {})
+}
+
+module "quality" {
+  source = "./modules/quality"
+
+  repositories = var.repositories
+  quality_config = var.quality_config
+}
+
+locals {
+  # Aggregate configurations for use in templates and files
+  effective_config = {
+    security       = module.security.security_configuration
+    development    = module.development.development_config
+    infrastructure = module.infrastructure.infrastructure_config
+    quality        = module.quality.code_quality_config
+  }
+}

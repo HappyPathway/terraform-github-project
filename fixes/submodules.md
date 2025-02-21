@@ -1,5 +1,3 @@
-I dont have Github Pro, none of my tests will pass if I they require me to have Github Pro.
-
 # Submodule Migration Plan
 
 ## Overview
