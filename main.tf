@@ -1,28 +1,17 @@
 # Repositories data source
-data "github_repository" "existing_repos" {
-  for_each  = { for repo in var.repositories : repo.name => repo if try(repo.create_repo, true) == false }
-  full_name = "${coalesce(each.value.repo_org, var.repo_org)}/${each.key}"
-}
-
 # Base repository locals
 locals {
   base_repository = merge({
     name                     = var.project_name
     description              = "Base repository for ${var.project_name} project"
     topics                   = ["project-base"]
-    visibility              = "private"
-    has_issues              = true
-    has_wiki                = true
-    has_projects            = true
+    visibility               = "private"
+    has_issues               = true
+    has_wiki                 = true
+    has_projects             = true
     enable_branch_protection = true
-    create_codeowners       = true
-    force_name              = true
-    managed_extra_files = concat([
-      {
-        path    = ".github/prompts/${var.project_name}.prompt.md"
-        content = var.project_prompt
-      }
-    ], var.base_repository.managed_extra_files != null ? var.base_repository.managed_extra_files : [])
+    create_codeowners        = true
+    force_name               = true
   }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
 
@@ -38,101 +27,58 @@ locals {
       name = "README.md"
     },
     {
-      content = templatefile("${path.module}/templates/CONTRIBUTING.md", {
-        project_name = var.project_name
-      })
-      name = "CONTRIBUTING.md"
-    },
-    {
       content = templatefile("${path.module}/templates/CODEOWNERS", {
         codeowners = var.project_owners
       })
       name = ".github/CODEOWNERS"
     },
     {
-      content     = file("${path.module}/templates/pull_request_template.md")
-      name = ".github/pull_request_template.md"
+      content = file("${path.module}/templates/pull_request_template.md")
+      name    = ".github/pull_request_template.md"
     }
-  }
+  ]
 
-  # Managed files configuration
-  managed_files = [
+  # Project prompt files
+  project_prompt_files = [
     {
-      content = {
-        data = jsonencode({
-          name = var.project_name
-          build = {
-            dockerfile = "Dockerfile"
-            context    = "."
-          }
-          customizations = {
-            vscode = {
-              extensions = [
-                "github.copilot",
-                "github.copilot-chat",
-                "eamodio.gitlens"
-              ]
-            }
-          }
-          containerEnv = {
-            "TZ" = "UTC"
-          }
-          forwardPorts      = [3000, 8080]
-          postCreateCommand = "echo 'Development container ready'"
-        }),
-        type = "json",
-        content = ""  # Required field
-      }
-      name = ".devcontainer/devcontainer.json"
-    },
-    
-  
+      content = var.project_prompt
+      name    = ".github/prompts/${var.project_name}.prompt.md"
+    }
+  ]
 
   # VS Code workspace configuration
-  workspace_config_files = var.vs_code_workspace != null ? {
-    "${var.project_name}.code-workspace" = {
-      content = {
-        data = jsonencode({
-          folders = concat(
-            [{ name = var.project_name, path = "." }],
-            [for repo in var.repositories : {
-              name = repo.name
-              path = "../${repo.name}"
-            }]
-          )
-          settings = try(var.vs_code_workspace.settings, {})
-          extensions = {
-            recommendations = distinct(concat(
-              try(var.vs_code_workspace.extensions.recommended, []),
-              try(var.vs_code_workspace.extensions.required, []),
-              ["github.copilot", "github.copilot-chat"]
-            ))
-          }
-          tasks = try(var.vs_code_workspace.tasks, [])
-        }),
-        type = "json",
-        content = ""  # Required field
-      }
-      description = {
-        title = "VS Code workspace configuration",
-        details = "Configures multi-root workspace for VS Code",
-        content = "VS Code workspace configuration file" # Adding required content field
-      }
+  workspace_config_files = [
+    {
+      name = "${var.project_name}.code-workspace"
+      content = jsonencode({
+        folders = concat(
+          [{ name = var.project_name, path = "." }],
+          [for repo in var.repositories : {
+            name = repo.name
+            path = "../${repo.name}"
+          }]
+        )
+        settings = try(local.effective_vscode.settings, {})
+        extensions = {
+          recommendations = distinct(concat(
+            try(var.vs_code_workspace.extensions.recommended, []),
+            try(var.vs_code_workspace.extensions.required, []),
+            ["github.copilot", "github.copilot-chat"]
+          ))
+        }
+        tasks = try(var.vs_code_workspace.tasks, [])
+        launch = {
+          version = "0.2.0"
+          configurations = try(var.vs_code_workspace.launch_configurations, [])
+        }
+      })
     }
-  } : {}
+  ]
 
-  # Repository dependencies and environments
-  repository_dependencies = {
-    for repo in var.repositories : repo.name => try(repo.dependencies, [])
-  }
-
-  repository_environments = {
-    for repo in var.repositories : repo.name => try(repo.environments, [])
-  }
-
-  # Combine all files
-  all_repository_files = merge(
-    local.managed_files,
+  # Combine all files into a single list
+  all_repository_files = concat(
+    local.standard_files,
+    local.project_prompt_files,
     local.workspace_config_files
   )
 }
@@ -140,11 +86,10 @@ locals {
 # Repository files module
 module "repository_files" {
   source = "./modules/repository_files"
-  for_each = local.all_repository_files
 
   repository = var.project_name
   branch     = "main"
-  files      = each.value
+  files      = local.all_repository_files
 
   depends_on = [
     module.base_repo,
@@ -156,9 +101,9 @@ module "repository_files" {
 module "security" {
   source = "./modules/security"
 
-  repositories            = var.repositories
-  enable_security_scanning = true
-  security_frameworks     = []
+  repositories              = var.repositories
+  enable_security_scanning  = true
+  security_frameworks       = []
   container_security_config = {}
 
   depends_on = [
@@ -173,7 +118,7 @@ module "development" {
 
   repositories         = var.repositories
   testing_requirements = try(var.development_config.testing_requirements, {})
-  ci_cd_config        = try(var.development_config.ci_cd_config, {})
+  ci_cd_config         = try(var.development_config.ci_cd_config, {})
 
   depends_on = [
     module.base_repo,
@@ -209,10 +154,10 @@ module "quality" {
 
 # Copilot module
 module "copilot" {
-  source = "./modules/copilot"
-  project_name = var.project_name
+  source               = "./modules/copilot"
+  project_name         = var.project_name
   repositories         = var.repositories
   copilot_instructions = var.copilot_instructions
-  enforce_prs         = var.enforce_prs
-  github_pro_enabled  = false  # As per user instructions
+  enforce_prs          = var.enforce_prs
+  github_pro_enabled   = false # As per user instructions
 }

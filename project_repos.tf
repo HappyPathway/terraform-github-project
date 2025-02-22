@@ -20,7 +20,7 @@ locals {
         try(repo.description, null),
         local.base_prompt_content
       ))
-      filename = "${name}-prompt.md"
+      name = "${var.project_name}.prompt.md"
     }
   }
 }
@@ -32,8 +32,7 @@ module "project_repos" {
   # Basic repository settings
   name       = each.key
   repo_org   = coalesce(each.value.repo_org, var.repo_org)
-  force_name = try(each.value.force_name, false)
-
+  force_name = true
   # Repository configuration - inherit from base repo if not specified
   create_repo             = true
   enforce_prs             = local.branch_protection_enabled[each.key]
@@ -61,7 +60,7 @@ module "project_repos" {
     coalesce(try(each.value.managed_extra_files, []), []),
     [
       {
-        path    = ".github/prompts/${local.repository_prompts[each.key].filename}"
+        path    = ".github/prompts/${local.repository_prompts[each.key].name}"
         content = local.repository_prompts[each.key].content
       }
     ]
@@ -73,7 +72,7 @@ module "project_repos" {
 
   # Additional settings - inherit from base repo
   archived              = try(each.value.archived, module.base_repo.github_repo.archived)
-  archive_on_destroy    = try(each.value.archive_on_destroy, module.base_repo.github_repo.archive_on_destroy)
+  archive_on_destroy    = var.archive_on_destroy
   vulnerability_alerts  = try(each.value.vulnerability_alerts, module.base_repo.github_repo.vulnerability_alerts)
   gitignore_template    = try(each.value.gitignore_template, module.base_repo.github_repo.gitignore_template)
   license_template      = try(each.value.license_template, module.base_repo.github_repo.license_template)

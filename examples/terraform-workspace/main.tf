@@ -15,8 +15,10 @@ module "terraform_workspace" {
   source = "../../"
 
   project_name    = "aws-platform"
-  repo_org        = "my-org"
+  repo_org        = "HappyPathway"
   project_prompt  = "AWS infrastructure modules and platform configuration"
+  
+  archive_on_destroy = false
 
   repositories = [
     {

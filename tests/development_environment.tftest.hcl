@@ -1,5 +1,5 @@
 mock_provider "github" {
-  source = "./mocks"
+  source = "./tests/mocks"
 }
 
 run "development_environment_configuration" {

@@ -21,16 +21,4 @@ locals {
     "${path.module}/templates/init.sh.tpl",
     local.initialization_template_vars
   )
-
-  # Files to be created in the base repository
-  repo_files = {
-    "${var.project_name}.code-workspace" = {
-      content     = local.workspace_content
-      description = "VS Code workspace configuration"
-    }
-    "init.sh" = {
-      content     = local.init_script_content
-      description = "Project initialization script"
-    }
-  }
 }
