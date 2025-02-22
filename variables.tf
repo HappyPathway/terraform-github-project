@@ -350,13 +350,13 @@ variable "project_owners" {
   default     = []
 }
 
-variable archive_on_destroy {
+variable "archive_on_destroy" {
   description = "Archive repositories on destroy"
   type        = bool
   default     = true
 }
 
-variable setup_dev_container {
+variable "setup_dev_container" {
   description = "Set up a development container for the project"
   type        = bool
   default     = false

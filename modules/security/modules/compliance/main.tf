@@ -29,6 +29,6 @@ locals {
   security_controls = distinct(flatten([
     for repo in var.repositories :
     [for topic in coalesce(repo.github_repo_topics, []) :
-     topic if can(regex("^(security-control|control|compliance-control)", topic))]
+    topic if can(regex("^(security-control|control|compliance-control)", topic))]
   ]))
 }

@@ -54,15 +54,15 @@ locals {
 
   # Generate copilot instructions
   copilot_instructions = coalesce(var.copilot_instructions, templatefile("${path.module}/templates/copilot_instructions.tpl", {
-    project_name = var.project_name
-    languages = local.languages
-    frameworks = local.frameworks
-    testing_tools = local.testing_tools
-    linting_tools = local.linting_tools
-    iac_tools = local.iac_tools
-    cloud_providers = local.cloud_providers
-    security_tools = local.security_tools
-    enforce_prs = var.enforce_prs
+    project_name       = var.project_name
+    languages          = local.languages
+    frameworks         = local.frameworks
+    testing_tools      = local.testing_tools
+    linting_tools      = local.linting_tools
+    iac_tools          = local.iac_tools
+    cloud_providers    = local.cloud_providers
+    security_tools     = local.security_tools
+    enforce_prs        = var.enforce_prs
     github_pro_enabled = var.github_pro_enabled
   }))
 
@@ -94,11 +94,11 @@ EOT
   repository_files = {
     for repo in var.repositories : repo.name => {
       copilot_instructions = {
-        path = ".github/prompts/copilot-setup.md"
+        path    = ".github/prompts/copilot-setup.md"
         content = local.copilot_instructions
       }
       repo_prompt = lookup(repo, "prompt", null) != null ? {
-        path = ".github/prompts/repo-setup.prompt.md"
+        path    = ".github/prompts/repo-setup.prompt.md"
         content = repo.prompt
       } : null
     }

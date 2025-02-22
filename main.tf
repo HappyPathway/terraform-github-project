@@ -51,14 +51,8 @@ locals {
     {
       name = "${var.project_name}.code-workspace"
       content = jsonencode({
-        folders = concat(
-          [{ name = var.project_name, path = "." }],
-          [for repo in var.repositories : {
-            name = repo.name
-            path = "../${repo.name}"
-          }]
-        )
-        settings = try(local.effective_vscode.settings, {})
+        folders    = local.workspace_folders,
+        settings   = try(local.effective_vscode.settings, {})
         extensions = {
           recommendations = distinct(concat(
             try(var.vs_code_workspace.extensions.recommended, []),
@@ -68,7 +62,7 @@ locals {
         }
         tasks = try(var.vs_code_workspace.tasks, [])
         launch = {
-          version = "0.2.0"
+          version        = "0.2.0"
           configurations = try(var.vs_code_workspace.launch_configurations, [])
         }
       })

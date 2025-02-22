@@ -6,10 +6,10 @@ variable "project_name" {
 variable "repositories" {
   description = "List of repositories to analyze and create copilot files for"
   type = list(object({
-    name = string
-    github_repo_topics = optional(list(string), [])
+    name                  = string
+    github_repo_topics    = optional(list(string), [])
     github_default_branch = optional(string, "main")
-    prompt = string
+    prompt                = string
   }))
 }
 

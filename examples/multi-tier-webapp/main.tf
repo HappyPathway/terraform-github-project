@@ -6,7 +6,7 @@ terraform {
 
   required_providers {
     github = {
-      source  = "integrations/github"
+      source = "integrations/github"
     }
   }
 }
@@ -14,8 +14,8 @@ terraform {
 module "github_project" {
   source = "../../"
 
-  project_name = "e-commerce-platform"
-  repo_org     = "my-org"
+  project_name   = "e-commerce-platform"
+  repo_org       = "my-org"
   project_prompt = "E-commerce platform with React frontend, Node.js API, and PostgreSQL database"
   repositories = [
     {
@@ -47,23 +47,23 @@ module "github_project" {
   # Security configuration
   security_config = {
     enable_security_scanning = true
-    security_frameworks     = ["SOC2", "GDPR"]
-    
+    security_frameworks      = ["SOC2", "GDPR"]
+
     container_security_config = {
       scanning_tools    = ["trivy", "snyk"]
       runtime_security  = ["falco"]
       registry_security = ["harbor"]
-      uses_distroless  = true
+      uses_distroless   = true
     }
   }
 
   # Development configuration
   development_config = {
     testing_requirements = {
-      required = true
+      required           = true
       coverage_threshold = 85
     }
-    
+
     ci_cd_config = {
       ci_cd_tools = ["github-actions"]
       required_status_checks = [
@@ -78,29 +78,29 @@ module "github_project" {
   # Infrastructure configuration
   infrastructure_config = {
     iac_config = {
-      iac_tools = ["terraform"]
-      cloud_providers = ["aws"]
+      iac_tools           = ["terraform"]
+      cloud_providers     = ["aws"]
       documentation_tools = ["terraform-docs"]
-      testing_frameworks = ["terratest"]
+      testing_frameworks  = ["terratest"]
     }
   }
 
   # Quality configuration
   quality_config = {
-    linting_required = true
-    type_safety = true
+    linting_required       = true
+    type_safety            = true
     documentation_required = true
-    
+
     formatting_tools = [
       "prettier",
       "eslint"
     ]
-    
+
     linting_tools = [
       "eslint",
       "tslint"
     ]
-    
+
     documentation_tools = [
       "typedoc",
       "swagger"

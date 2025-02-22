@@ -6,7 +6,7 @@ terraform {
 
   required_providers {
     github = {
-      source  = "integrations/github"
+      source = "integrations/github"
     }
   }
 }
@@ -14,21 +14,21 @@ terraform {
 module "github_project" {
   source = "../../"
 
-  project_name = "minimal-project"
-  repo_org     = "my-org"
+  project_name   = "minimal-project"
+  repo_org       = "my-org"
   project_prompt = "Minimal project with a single Python FastAPI service"
   repositories = [
     {
-      name = "service"
+      name               = "service"
       github_repo_topics = ["python", "fastapi", "pytest"]
-      prompt = "Python FastAPI service"
+      prompt             = "Python FastAPI service"
     }
   ]
 
   # Security configuration using security module
   security_config = {
     enable_security_scanning = true
-    security_frameworks     = ["SOC2"]
+    security_frameworks      = ["SOC2"]
     container_security_config = {
       scanning_tools = ["trivy"]
     }
@@ -37,11 +37,11 @@ module "github_project" {
   # Development configuration using development module
   development_config = {
     testing_requirements = {
-      required = true
+      required           = true
       coverage_threshold = 80
     }
     ci_cd_config = {
-      ci_cd_tools = ["github-actions"]
+      ci_cd_tools            = ["github-actions"]
       required_status_checks = ["test", "lint"]
     }
   }
@@ -49,17 +49,17 @@ module "github_project" {
   # Infrastructure configuration using infrastructure module
   infrastructure_config = {
     iac_config = {
-      iac_tools = ["terraform"]
+      iac_tools           = ["terraform"]
       documentation_tools = ["terraform-docs"]
     }
   }
 
   # Quality configuration using quality module
   quality_config = {
-    linting_required = true
-    type_safety = true
+    linting_required       = true
+    type_safety            = true
     documentation_required = true
-    formatting_tools = ["black", "isort"]
-    linting_tools = ["flake8", "pylint"]
+    formatting_tools       = ["black", "isort"]
+    linting_tools          = ["flake8", "pylint"]
   }
 }

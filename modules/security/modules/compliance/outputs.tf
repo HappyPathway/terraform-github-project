@@ -1,10 +1,10 @@
 output "compliance_config" {
   description = "Compliance configuration derived from repository analysis"
   value = {
-    data_protection = local.data_protection
+    data_protection       = local.data_protection
     compliance_frameworks = local.compliance_frameworks
-    requires_audit = local.requires_audit
-    security_controls = local.security_controls
+    requires_audit        = local.requires_audit
+    security_controls     = local.security_controls
   }
 }
 

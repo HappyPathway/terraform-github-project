@@ -6,7 +6,7 @@ terraform {
 
   required_providers {
     github = {
-      source  = "integrations/github"
+      source = "integrations/github"
     }
   }
 }
@@ -14,20 +14,20 @@ terraform {
 module "terraform_workspace" {
   source = "../../"
 
-  project_name    = "aws-platform"
-  repo_org        = "HappyPathway"
-  project_prompt  = "AWS infrastructure modules and platform configuration"
-  
+  project_name   = "aws-platform"
+  repo_org       = "HappyPathway"
+  project_prompt = "AWS infrastructure modules and platform configuration"
+
   archive_on_destroy = false
 
   repositories = [
     {
-      name        = "platform-core"
-      description = "Core AWS platform configuration"
-      topics      = ["terraform", "aws", "infrastructure"]
+      name               = "platform-core"
+      description        = "Core AWS platform configuration"
+      topics             = ["terraform", "aws", "infrastructure"]
       gitignore_template = "Terraform"
-      github_is_private = false
-      prompt      = "Core AWS platform including VPC, networking, and shared services"
+      github_is_private  = false
+      prompt             = "Core AWS platform including VPC, networking, and shared services"
       branch_protection = {
         required_status_checks = {
           strict = true
@@ -41,16 +41,16 @@ module "terraform_workspace" {
         }
         required_approving_review_count = 2
       }
-      has_wiki = true
+      has_wiki   = true
       has_issues = true
     },
     {
-      name        = "module-eks"
-      description = "EKS cluster module"
-      topics      = ["terraform", "aws", "eks", "kubernetes"]
+      name               = "module-eks"
+      description        = "EKS cluster module"
+      topics             = ["terraform", "aws", "eks", "kubernetes"]
       gitignore_template = "Terraform"
-      prompt      = "Reusable module for EKS cluster deployment with best practices"
-      github_is_private = false
+      prompt             = "Reusable module for EKS cluster deployment with best practices"
+      github_is_private  = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-fmt", "terraform-docs", "tflint"]
@@ -58,12 +58,12 @@ module "terraform_workspace" {
       }
     },
     {
-      name        = "module-rds"
-      description = "RDS database module"
-      topics      = ["terraform", "aws", "rds", "database"]
+      name               = "module-rds"
+      description        = "RDS database module"
+      topics             = ["terraform", "aws", "rds", "database"]
       gitignore_template = "Terraform"
-      prompt      = "Reusable module for RDS database deployment with security best practices"
-      github_is_private = false
+      prompt             = "Reusable module for RDS database deployment with security best practices"
+      github_is_private  = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-fmt", "terraform-docs", "tflint"]
@@ -71,12 +71,12 @@ module "terraform_workspace" {
       }
     },
     {
-      name        = "environments"
-      description = "Environment-specific configurations"
-      topics      = ["terraform", "aws", "environments"]
+      name               = "environments"
+      description        = "Environment-specific configurations"
+      topics             = ["terraform", "aws", "environments"]
       gitignore_template = "Terraform"
-      prompt      = "Environment-specific Terraform configurations for development, staging, and production"
-      github_is_private = false
+      prompt             = "Environment-specific Terraform configurations for development, staging, and production"
+      github_is_private  = false
       branch_protection = {
         required_status_checks = {
           contexts = ["terraform-plan"]
@@ -93,10 +93,10 @@ module "terraform_workspace" {
     branch_protection = {
       required_linear_history = true
       required_status_checks = {
-        strict = true
+        strict   = true
         contexts = ["terraform-fmt"]
       }
-      require_code_owner_reviews = true
+      require_code_owner_reviews      = true
       required_approving_review_count = 2
     }
     pages = {

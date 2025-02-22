@@ -27,14 +27,14 @@ output "standards_config" {
   description = "Development standards configuration"
   value = {
     testing_requirements = local.testing_requirements
-    code_quality = local.code_quality_config
+    code_quality         = local.code_quality_config
   }
 }
 
 output "deployment_config" {
-  description = "Deployment configuration"  
+  description = "Deployment configuration"
   value = {
-    ci_cd = local.ci_cd_config
+    ci_cd        = local.ci_cd_config
     environments = local.deployment_environments
   }
 }

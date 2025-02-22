@@ -95,6 +95,6 @@ locals {
       name = repo.name,
       path = "../${repo.name}"
     }],
-    coalesce(var.workspace_files, [])
+    var.workspace_files
   )
 }

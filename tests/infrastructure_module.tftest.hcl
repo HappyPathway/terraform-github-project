@@ -1,5 +1,8 @@
 run "verify_infrastructure_patterns" {
   variables {
+    project_name = "test-infrastructure"
+    repo_org       = "HappyPathway"
+    project_prompt = "Test project for infrastructure patterns"
     repositories = [
       {
         name = "terraform-modules"
@@ -26,22 +29,22 @@ run "verify_infrastructure_patterns" {
   }
 
   assert {
-    condition = contains(module.infrastructure.detected_iac_tools, "terraform")
+    condition     = contains(module.infrastructure.detected_iac_tools, "terraform")
     error_message = "Should detect Terraform as IaC tool"
   }
 
   assert {
-    condition = contains(module.infrastructure.detected_cloud_providers, "aws")
+    condition     = contains(module.infrastructure.detected_cloud_providers, "aws")
     error_message = "Should detect AWS as cloud provider"
   }
 
   assert {
-    condition = module.infrastructure.has_kubernetes
+    condition     = module.infrastructure.has_kubernetes
     error_message = "Should detect Kubernetes configuration"
   }
 
   assert {
-    condition = module.infrastructure.uses_terraform_modules
+    condition     = module.infrastructure.uses_terraform_modules
     error_message = "Should detect Terraform module usage"
   }
 }
@@ -63,17 +66,17 @@ run "verify_module_patterns" {
   }
 
   assert {
-    condition = length(module.infrastructure.module_documentation_tools) > 0
+    condition     = length(module.infrastructure.module_documentation_tools) > 0
     error_message = "Should detect module documentation tools"
   }
 
   assert {
-    condition = contains(module.infrastructure.module_testing_frameworks, "terratest")
+    condition     = contains(module.infrastructure.module_testing_frameworks, "terratest")
     error_message = "Should detect Terratest as testing framework"
   }
 
   assert {
-    condition = module.infrastructure.module_config.is_module
+    condition     = module.infrastructure.module_config.is_module
     error_message = "Should identify repository as a module"
   }
 }

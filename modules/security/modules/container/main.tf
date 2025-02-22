@@ -21,6 +21,6 @@ locals {
     scanning_tools    = local.container_scanning_required ? var.container_security_config.scanning_tools : []
     runtime_security  = local.runtime_security_required ? var.container_security_config.runtime_security : []
     registry_security = local.registry_security_required ? var.container_security_config.registry_security : []
-    uses_distroless  = var.container_security_config.uses_distroless
+    uses_distroless   = var.container_security_config.uses_distroless
   }
 }

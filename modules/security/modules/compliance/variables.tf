@@ -1,9 +1,9 @@
 variable "repositories" {
   description = "List of repository configurations to analyze for compliance patterns"
   type = list(object({
-    name              = string
+    name               = string
     github_repo_topics = optional(list(string))
-    prompt            = optional(string)
+    prompt             = optional(string)
   }))
 }
 

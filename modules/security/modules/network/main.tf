@@ -2,7 +2,7 @@ locals {
   network_tools = distinct(flatten([
     for repo in var.repositories :
     [for topic in coalesce(repo.github_repo_topics, []) :
-     topic if can(regex("^(network|firewall|waf|cdn|lb)", topic))]
+    topic if can(regex("^(network|firewall|waf|cdn|lb)", topic))]
   ]))
 
   zero_trust = anytrue([
@@ -21,6 +21,6 @@ locals {
   network_policies = distinct(flatten([
     for repo in var.repositories :
     [for topic in coalesce(repo.github_repo_topics, []) :
-     topic if can(regex("^(network-policy|security-group|acl)", topic))]
+    topic if can(regex("^(network-policy|security-group|acl)", topic))]
   ]))
 }
