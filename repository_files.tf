@@ -64,6 +64,7 @@ locals {
               name        = repo.name
               description = lookup(repo, "description", "${var.project_name}::${repo.name}") # Ensure empty string if null
             }
+          ])
         })
       },
       {

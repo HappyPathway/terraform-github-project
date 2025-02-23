@@ -119,12 +119,7 @@ locals {
       {
         name = "${var.project_name}.code-workspace"
         content = jsonencode({
-          folders = [
-            {
-              name = var.project_name
-              path = "."
-            }
-          ]
+          folders = local.workspace_folders,pwd
           settings = local.effective_vscode.settings
           extensions = {
             recommendations = local.effective_vscode.extensions.recommended

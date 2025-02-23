@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Project git management script for ${project_name}"""
+"""Project initialization script for ${project_name}"""
 import argparse
 import asyncio
 import json
@@ -8,15 +8,18 @@ import sys
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Dict
+import aiohttp
+import asyncio.subprocess
+
 
 class ProjectInitializer:
-    def __init__(self, project_name: str, repo_org: str, repositories: Union[str, List[Dict]]):
+    def __init__(self, project_name: str, repo_org: str, repositories: str):
         self.project_name = project_name
         self.repo_org = repo_org
-        self.repositories = repositories if isinstance(repositories, list) else json.loads(repositories)
+        self.repositories = json.loads(repositories)  # Deserialize the JSON string
         self.base_dir = Path("..").resolve()
-        self.semaphore = None  # Will be initialized in run()
+        self.semaphore = asyncio.Semaphore(5)  # Limit concurrent git operations
 
     async def verify_git_ssh(self) -> bool:
         """Verify Git SSH access to GitHub"""
@@ -140,12 +143,13 @@ class ProjectInitializer:
                 cwd=repo_path
             )
             await checkout_process.communicate()
+            
             return True
         except Exception as e:
             print(f"Error creating backup branch: {e}")
             return False
 
-    async def nuke_repository(self, repo: Dict, dry_run: bool = False) -> None:
+    async def nuke_repository(self, repo: Dict) -> None:
         """Reset repository to clean state after creating a backup branch"""
         async with self.semaphore:
             repo_name = repo.get("name")
@@ -159,13 +163,8 @@ class ProjectInitializer:
                 return
 
             print(f"\nNuking repository: {repo_name}")
-            if dry_run:
-                print(f"[DRY-RUN] Would create backup branch for {repo_name}")
-                print(f"[DRY-RUN] Would reset {repo_name} to remote branch state")
-                print(f"[DRY-RUN] Would clean untracked files in {repo_name}")
-                return
-
             print(f"Creating backup branch for {repo_name}...")
+            
             if await self.create_backup_branch(repo_path):
                 print(f"✅ Backup branch created for {repo_name}")
                 try:
@@ -196,41 +195,43 @@ class ProjectInitializer:
                         cwd=repo_path
                     )
                     await clean_process.communicate()
+
                     print(f"✅ {repo_name} reset successfully")
                 except Exception as e:
-                    print(f"Error resetting {repo_name}: {e}")
+                    print(f"❌ Error resetting {repo_name}: {e}")
             else:
                 print(f"❌ Failed to create backup branch for {repo_name}, aborting reset")
 
     async def process_repository(self, repo: Dict) -> None:
-        """Process a single repository"""
-        repo_name = repo.get("name")
-        if not repo_name:
-            print("❌ Repository missing name field")
-            return
+        async with self.semaphore:
+            repo_name = repo.get("name")
+            if not repo_name:
+                print("❌ Repository missing name field")
+                return
 
-        repo_path = self.base_dir / repo_name
-        expected_remote = f"git@github.com:{self.repo_org}/{repo_name}.git"
+            repo_path = self.base_dir / repo_name
+            expected_remote = f"git@github.com:{self.repo_org}/{repo_name}.git"
 
-        print(f"\nProcessing repository: {repo_name}")
-        if repo_path.exists():
-            print(f"Repository {repo_name} exists, verifying...")
-            if await self.check_remote(repo_path, expected_remote):
-                print(f"Updating {repo_name}...")
-                if await self.update_repository(repo_path):
-                    print(f"✅ {repo_name} updated successfully")
+            print(f"\nProcessing repository: {repo_name}")
+
+            if repo_path.exists():
+                print(f"Repository {repo_name} exists, verifying...")
+                if await self.check_remote(repo_path, expected_remote):
+                    print(f"Updating {repo_name}...")
+                    if await self.update_repository(repo_path):
+                        print(f"✅ {repo_name} updated successfully")
+                    else:
+                        print(f"❌ Failed to update {repo_name}")
                 else:
-                    print(f"❌ Failed to update {repo_name}")
+                    print(f"❌ Remote mismatch for {repo_name}")
+                    print(f"Expected: {expected_remote}")
+                    print("Please check the repository manually")
             else:
-                print(f"❌ Remote mismatch for {repo_name}")
-                print(f"Expected: {expected_remote}")
-                print("Please check the repository manually")
-        else:
-            print(f"Cloning {repo_name}...")
-            if await self.clone_repository(repo_name, repo_path):
-                print(f"✅ {repo_name} cloned successfully")
-            else:
-                print(f"❌ Failed to clone {repo_name}")
+                print(f"Cloning {repo_name}...")
+                if await self.clone_repository(repo_name, repo_path):
+                    print(f"✅ {repo_name} cloned successfully")
+                else:
+                    print(f"❌ Failed to clone {repo_name}")
 
     async def stage_changes(self, repo_path: Path, paths: List[str] = None) -> bool:
         """Stage changes for commit"""
@@ -240,6 +241,7 @@ class ProjectInitializer:
                 cmd.extend(paths)
             else:
                 cmd.append(".")
+                
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -273,6 +275,7 @@ class ProjectInitializer:
             cmd = ["git", "push"]
             if branch:
                 cmd.extend(["origin", branch])
+                
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -285,51 +288,12 @@ class ProjectInitializer:
             print(f"Error pushing changes: {e}")
             return False
 
-    async def checkout_branch(self, repo_path: Path, branch: str) -> bool:
-        """Checkout and pull a specific branch"""
-        try:
-            # Fetch all branches
-            fetch_process = await asyncio.create_subprocess_exec(
-                "git", "fetch", "--all",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=repo_path
-            )
-            await fetch_process.communicate()
-
-            # Checkout the specified branch
-            checkout_process = await asyncio.create_subprocess_exec(
-                "git", "checkout", branch,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=repo_path
-            )
-            await checkout_process.communicate()
-
-            # Pull latest changes
-            pull_process = await asyncio.create_subprocess_exec(
-                "git", "pull", "origin", branch,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=repo_path
-            )
-            await pull_process.communicate()
-            return True
-        except Exception as e:
-            print(f"Error checking out branch: {e}")
-            return False
-
-    async def run(self, nuke: bool = False, dry_run: bool = False) -> None:
+    async def run(self, nuke: bool = False) -> None:
         """Initialize or nuke the project workspace"""
         print(f"{'Nuking' if nuke else 'Initializing'} project: {self.project_name}")
-        if dry_run and nuke:
-            print("[DRY-RUN] This is a dry run - no changes will be made")
 
         # Create parent directory
         os.makedirs(self.base_dir, exist_ok=True)
-
-        # Initialize semaphore in the current event loop
-        self.semaphore = asyncio.Semaphore(5)
 
         # Verify Git SSH access
         print("\nVerifying Git SSH access to GitHub...")
@@ -340,71 +304,23 @@ class ProjectInitializer:
         print("✅ Git SSH access verified")
 
         # Process repositories in parallel
-        tasks = [self.nuke_repository(repo, dry_run) if nuke else self.process_repository(repo) 
+        tasks = [self.nuke_repository(repo) if nuke else self.process_repository(repo) 
                 for repo in self.repositories]
         await asyncio.gather(*tasks)
 
-        print(f"\n✅ Project {'nuking' if nuke else 'initialization'} {'simulation' if dry_run else 'operation'} complete!")
+        print(f"\n✅ Project {'nuked' if nuke else 'initialization'} complete!")
 
-async def handle_git_operations(initializer: ProjectInitializer, args) -> None:
-    """Handle git operations based on command line arguments"""
-    repos_to_process = []
-    for repo in initializer.repositories:
-        repo_name = repo.get("name")
-        if not repo_name:
-            continue
-
-        if args.exclude and repo_name in args.exclude:
-            print(f"Skipping excluded repository: {repo_name}")
-            continue
-
-        repo_path = initializer.base_dir / repo_name
-        if not repo_path.exists():
-            print(f"❌ Repository {repo_name} not found, skipping...")
-            continue
-            
-        repos_to_process.append((repo_name, repo_path))
-
-    if not repos_to_process:
-        print("No repositories to process!")
-        return
-
-    print(f"\nProcessing {len(repos_to_process)} repositories...")
-    for repo_name, repo_path in repos_to_process:
-        print(f"\nProcessing {repo_name}...")
-        
-        if args.checkout:
-            if await initializer.checkout_branch(repo_path, args.checkout):
-                print(f"✅ Checked out and pulled branch {args.checkout} in {repo_name}")
-            else:
-                print(f"❌ Failed to checkout branch {args.checkout} in {repo_name}")
-
-        if args.commit:
-            if await initializer.stage_changes(repo_path, args.files):
-                print(f"✅ Changes staged in {repo_name}")
-                if await initializer.commit_changes(repo_path, args.message):
-                    print(f"✅ Changes committed in {repo_name}")
-                else:
-                    print(f"❌ Failed to commit changes in {repo_name}")
-            else:
-                print(f"❌ Failed to stage changes in {repo_name}")
-
-        if args.push:
-            if await initializer.push_changes(repo_path, args.branch):
-                print(f"✅ Changes pushed in {repo_name}")
-            else:
-                print(f"❌ Failed to push changes in {repo_name}")
 
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Initialize or nuke project workspace")
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument("--nuke", action="store_true", help="Remove all repositories (after creating backup branches)")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would happen without making any changes")
-    parser.add_argument("--checkout", help="Checkout and pull a specific branch")
+    
+    # Modified git operation arguments
     parser.add_argument("--commit", action="store_true", help="Create a new commit")
     parser.add_argument("--message", "-m", help="Commit message")
-    parser.add_argument("--push", action="store_true", help="Push changes to remote")
+    parser.add.add_argument("--push", action="store_true", help="Push changes to remote")
     parser.add_argument("--files", nargs="+", help="Specific files to stage")
     parser.add_argument("--branch", help="Branch name for push operation")
     parser.add_argument("--exclude", nargs="+", help="Exclude specific repositories")
@@ -412,14 +328,10 @@ def main():
     args = parser.parse_args()
 
     # Project configuration
-    project_name = "${project_name}"
-    repo_org = "${repo_org}"
-    repositories = ${repositories}
-
     config = {
-        "project_name": project_name,
-        "repo_org": repo_org,
-        "repositories": repositories
+        "project_name": "${project_name}",
+        "repo_org": "${repo_org}",
+        "repositories": ${repositories}
     }
 
     if args.debug:
@@ -427,25 +339,61 @@ def main():
         print(json.dumps(config, indent=2))
 
     initializer = ProjectInitializer(**config)
+    
+    # Handle git operations if specified
+    if args.commit or args.push:
+        if args.commit and not args.message:
+            print("❌ --message is required for commit operation")
+            sys.exit(1)
 
-    try:
-        if args.commit or args.push or args.checkout:
-            if args.commit and not args.message:
-                print("❌ --message is required for commit operation")
-                sys.exit(1)
-            asyncio.run(handle_git_operations(initializer, args))
-        else:
-            # Run initialization or nuke
-            asyncio.run(initializer.run(nuke=args.nuke, dry_run=args.dry_run))
-    except KeyboardInterrupt:
-        print("\nOperation cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ An error occurred: {e}")
-        if args.debug:
-            import traceback
-            traceback.print_exc()
-        sys.exit(1)
+        async def git_operations():
+            repos_to_process = []
+            for repo in initializer.repositories:
+                repo_name = repo.get("name")
+                if not repo_name:
+                    continue
+                    
+                # Skip if repo is excluded
+                if args.exclude and repo_name in args.exclude:
+                    print(f"Skipping excluded repository: {repo_name}")
+                    continue
+                    
+                repo_path = initializer.base_dir / repo_name
+                if not repo_path.exists():
+                    print(f"❌ Repository {repo_name} not found, skipping...")
+                    continue
+                    
+                repos_to_process.append((repo_name, repo_path))
+
+            if not repos_to_process:
+                print("No repositories to process!")
+                return
+
+            print(f"\nProcessing {len(repos_to_process)} repositories...")
+            for repo_name, repo_path in repos_to_process:
+                print(f"\nProcessing {repo_name}...")
+                
+                if args.commit:
+                    if await initializer.stage_changes(repo_path, args.files):
+                        print(f"✅ Changes staged in {repo_name}")
+                        if await initializer.commit_changes(repo_path, args.message):
+                            print(f"✅ Changes committed in {repo_name}")
+                        else:
+                            print(f"❌ Failed to commit changes in {repo_name}")
+                    else:
+                        print(f"❌ Failed to stage changes in {repo_name}")
+
+                if args.push:
+                    if await initializer.push_changes(repo_path, args.branch):
+                        print(f"✅ Changes pushed in {repo_name}")
+                    else:
+                        print(f"❌ Failed to push changes in {repo_name}")
+
+        asyncio.run(git_operations())
+    else:
+        # Run initialization or nuke
+        asyncio.run(initializer.run(nuke=args.nuke))
+
 
 if __name__ == "__main__":
     main()
