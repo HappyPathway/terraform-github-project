@@ -4,12 +4,17 @@ import sys
 from typing import Dict, List, Set
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 @dataclass
 class RepoConfig:
     name: str
     expected_files: Set[str]
     actual_files: Set[str]
+
+def normalize_repo_name(name: str) -> str:
+    """Remove date suffix from repository name if present"""
+    return re.sub(r'-\d{8}$', '', name)
 
 def load_terraform_state(state_file: str) -> dict:
     """Load the Terraform state file"""
@@ -32,9 +37,10 @@ def extract_repository_files(state: dict) -> Dict[str, Set[str]]:
                 file_path = instance['attributes'].get('file')
                 
                 if repository and file_path:
-                    if repository not in repo_files:
-                        repo_files[repository] = set()
-                    repo_files[repository].add(file_path)
+                    normalized_name = normalize_repo_name(repository)
+                    if normalized_name not in repo_files:
+                        repo_files[normalized_name] = set()
+                    repo_files[normalized_name].add(file_path)
     
     return repo_files
 
@@ -46,7 +52,8 @@ def get_expected_base_repo_files(project_name: str) -> Set[str]:
         '.github/pull_request_template.md',
         f'.github/prompts/{project_name}.prompt.md',
         f'.github/prompts/{project_name}.copilot.md',
-        'init.sh',
+        'scripts/init.py',
+        'scripts/requirements.txt',
         f'{project_name}.code-workspace',
         # Development files from modules
         '.github/prompts/development-guidelines.prompt.md',
@@ -59,11 +66,12 @@ def get_expected_base_repo_files(project_name: str) -> Set[str]:
 
 def get_expected_project_repo_files(repo_name: str, project_name: str) -> Set[str]:
     """Get the expected files for a project repository"""
+    normalized_name = normalize_repo_name(repo_name)
     return {
         'README.md',
         '.github/CODEOWNERS',
         '.github/pull_request_template.md',
-        f'.github/prompts/{repo_name}.prompt.md',
+        f'.github/prompts/{normalized_name}.prompt.md',
         f'.github/prompts/{project_name}.copilot.md',
     }
 
@@ -79,17 +87,18 @@ def validate_repositories(state_file: str, project_name: str) -> List[RepoConfig
     results.append(RepoConfig(
         name=project_name,
         expected_files=base_expected,
-        actual_files=actual_files.get(project_name, set())
+        actual_files=actual_files.get(normalize_repo_name(project_name), set())
     ))
     
     # Validate project repositories
     for repo_name in actual_files:
-        if repo_name != project_name:
-            project_expected = get_expected_project_repo_files(repo_name, project_name)
+        normalized_name = normalize_repo_name(repo_name)
+        if normalized_name != project_name:
+            project_expected = get_expected_project_repo_files(normalized_name, project_name)
             results.append(RepoConfig(
                 name=repo_name,
                 expected_files=project_expected,
-                actual_files=actual_files.get(repo_name, set())
+                actual_files=actual_files.get(normalized_name, set())
             ))
     
     return results

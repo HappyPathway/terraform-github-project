@@ -6,12 +6,12 @@ locals {
       name = "README.md",
       content = templatefile("${path.module}/templates/README.md", {
         project_name = var.project_name
-        description  = try(var.base_repository.description, "")
+        description  = lookup(var.base_repository, "description", var.project_name)
         repo_org     = var.repo_org
         repositories = [
           for repo in var.repositories : {
             repo             = repo.name
-            repo_description = try(repo.description, "")
+            repo_description = lookup(repo, "description", "${var.project_name}::${repo.name}")  # Ensure empty string if null
           }
         ]
       })
@@ -27,12 +27,16 @@ locals {
       content = file("${path.module}/templates/pull_request_template.md")
     },
     {
-      name = "scripts/init.sh",
-      content = templatefile("${path.module}/templates/init.sh.tpl", {
+      name    = "scripts/init.py",
+      content = templatefile("${path.module}/templates/init.py.tpl", {
         project_name = var.project_name
         repo_org     = var.repo_org
-        repositories = var.repositories
+        repositories = jsonencode(var.repositories)
       })
+    },
+    {
+      name    = "scripts/requirements.txt",
+      content = file("${path.module}/templates/requirements.txt")
     }
   ]
 
@@ -109,13 +113,6 @@ locals {
       }
     ]
   }
-
-  # Generate init script content
-  init_script_content = templatefile("${path.module}/templates/init.sh.tpl", {
-    project_name = var.project_name
-    repo_org     = var.repo_org
-    repositories = [for repo in var.repositories : repo.name]
-  })
 }
 
 # Base repository files module (gets all module files and base config)
