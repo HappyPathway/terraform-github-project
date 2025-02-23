@@ -58,7 +58,12 @@ locals {
         content = templatefile("${path.module}/templates/project_git_manager.py.tpl", {
           project_name = var.project_name
           repo_org     = var.repo_org
-          repositories = jsonencode(var.repositories)
+          repositories = jsonencode([
+            for repo in var.repositories :
+            {
+              name        = repo.name
+              description = lookup(repo, "description", "${var.project_name}::${repo.name}") # Ensure empty string if null
+            }
         })
       },
       {
