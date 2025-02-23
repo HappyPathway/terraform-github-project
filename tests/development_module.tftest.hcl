@@ -1,6 +1,6 @@
 run "verify_development_standards" {
   variables {
-    project_name = "test-development-standards"
+    project_name   = "test-development-standards"
     repo_org       = "HappyPathway"
     project_prompt = "Test project for development standards"
     repositories = [

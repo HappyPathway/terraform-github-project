@@ -5,12 +5,12 @@ output "development_config" {
 
 output "detected_languages" {
   description = "Programming languages detected from repository topics"
-  value       = module.standards.languages_detected
+  value       = local.detected_languages
 }
 
 output "detected_frameworks" {
   description = "Frameworks detected from repository topics"
-  value       = module.standards.frameworks_detected
+  value       = local.detected_frameworks
 }
 
 output "detected_deployment_strategies" {
@@ -25,16 +25,32 @@ output "ci_cd_tools" {
 
 output "standards_config" {
   description = "Development standards configuration"
-  value = {
-    testing_requirements = local.testing_requirements
-    code_quality         = local.code_quality_config
-  }
+  value       = local.standards_config
 }
 
 output "deployment_config" {
   description = "Deployment configuration"
-  value = {
-    ci_cd        = local.ci_cd_config
-    environments = local.deployment_environments
-  }
+  value       = local.deployment_config
+}
+
+output "files" {
+  description = "List of files to be created by this module"
+  value = [
+    {
+      name = ".github/prompts/development-guidelines.prompt.md"
+      content = templatefile("${path.module}/templates/development-guidelines.prompt.md", {
+        repository_name = var.repositories[0].name
+        languages       = local.detected_languages
+        frameworks      = local.detected_frameworks
+        ci_cd_config    = try(var.ci_cd_config, {})
+      })
+    },
+    {
+      name = ".github/workflows/ci.yml"
+      content = templatefile("${path.module}/templates/ci.yml", {
+        testing_requirements = try(var.testing_requirements, {})
+        languages            = local.detected_languages
+      })
+    }
+  ]
 }

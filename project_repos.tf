@@ -1,7 +1,6 @@
-# Handle project prompt and repository specific prompts
+# Handle project repositories configuration
 locals {
   project_repositories = { for repo in var.repositories : repo.name => repo }
-  base_prompt_content  = trimspace(var.project_prompt)
 
   # Only enable branch protection for public repos or when GitHub Pro is enabled
   branch_protection_enabled = {
@@ -11,31 +10,17 @@ locals {
       (try(repo.visibility, "private") == "public" || var.github_pro_enabled)
     )
   }
-
-  # Repository-specific prompts with proper inheritance
-  repository_prompts = {
-    for name, repo in local.project_repositories : name => {
-      content = trimspace(coalesce(
-        try(repo.prompt, null),
-        try(repo.description, null),
-        local.base_prompt_content
-      ))
-      name = "${var.project_name}.prompt.md"
-    }
-  }
 }
 
 module "project_repos" {
   source   = "HappyPathway/repo/github"
-  for_each = { for name, repo in local.project_repositories : name => repo if try(repo.create_repo, true) }
+  for_each = local.project_repositories
 
   # Basic repository settings
-  name       = each.key
-  repo_org   = coalesce(each.value.repo_org, var.repo_org)
-  force_name = true
-  # Repository configuration - inherit from base repo if not specified
-  create_repo             = true
-  enforce_prs             = local.branch_protection_enabled[each.key]
+  name                    = each.key
+  repo_org                = var.repo_org
+  create_repo             = try(each.value.create_repo, true)
+  enforce_prs             = false # Disable branch protection initially
   github_repo_description = try(each.value.description, "Repository for the ${var.project_name} project in ${module.base_repo.github_repo.name}")
   github_repo_topics      = try(each.value.topics, module.base_repo.github_repo.topics)
   github_is_private       = try(each.value.visibility, module.base_repo.github_repo.visibility) == "private"
@@ -54,17 +39,9 @@ module "project_repos" {
   github_delete_branch_on_merge = try(each.value.delete_branch_on_merge, module.base_repo.github_repo.delete_branch_on_merge)
   github_allow_update_branch    = try(each.value.allow_update_branch, module.base_repo.github_repo.allow_update_branch)
 
-  # File management with prompts
-  extra_files = try(each.value.extra_files, [])
-  managed_extra_files = concat(
-    coalesce(try(each.value.managed_extra_files, []), []),
-    [
-      {
-        path    = ".github/prompts/${local.repository_prompts[each.key].name}"
-        content = local.repository_prompts[each.key].content
-      }
-    ]
-  )
+  # File management - handled by repository_files.tf
+  extra_files         = []
+  managed_extra_files = []
 
   # Teams and access control - inherit from base repo config
   admin_teams      = try(each.value.admin_teams, local.base_repo_config.admin_teams)
@@ -90,12 +67,11 @@ module "project_repos" {
 resource "github_branch_protection" "project_repos" {
   for_each = {
     for name, repo in local.project_repositories : name => repo
-    if local.branch_protection_enabled[name] && var.github_pro_enabled
+    if local.branch_protection_enabled[name]
   }
 
-  repository_id = module.project_repos[each.key].github_repo.node_id
-  pattern       = try(each.value.default_branch, module.base_repo.github_repo.default_branch)
-
+  repository_id           = module.project_repos[each.key].github_repo.node_id
+  pattern                 = module.project_repos[each.key].default_branch
   enforce_admins          = try(each.value.branch_protection.enforce_admins, local.base_repo_config.branch_protection.enforce_admins)
   required_linear_history = try(each.value.branch_protection.required_linear_history, local.base_repo_config.branch_protection.required_linear_history)
   allows_force_pushes     = try(each.value.branch_protection.allow_force_pushes, local.base_repo_config.branch_protection.allow_force_pushes)

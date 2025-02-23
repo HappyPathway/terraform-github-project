@@ -65,7 +65,7 @@ variable "repositories" {
     github_enforce_admins_branch_protection = optional(bool, true)
     additional_codeowners                   = optional(list(string), [])
     prefix                                  = optional(string)
-    force_name                              = optional(bool, false)
+    force_name                              = optional(bool, true)
     github_org_teams                        = optional(list(any))
     template_repo_org                       = optional(string)
     template_repo                           = optional(string)
@@ -360,4 +360,10 @@ variable "setup_dev_container" {
   description = "Set up a development container for the project"
   type        = bool
   default     = false
+}
+
+variable mkfiles {
+  description = "Are Repos Setup, can we add files now?"
+  type = bool
+  default = false
 }

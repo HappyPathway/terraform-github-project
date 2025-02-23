@@ -141,3 +141,30 @@ run "verify_workspace_file_creation" {
     error_message = "Workspace file should include github.copilot extension"
   }
 }
+
+run "verify_repo_settings" {
+  command = plan
+
+  variables {
+    project_name   = "test-repo-settings"
+    project_prompt = "Test project for repository settings"
+    repo_org       = "test-org"
+    repositories = [
+      {
+        name               = "test-repo"
+        github_repo_topics = ["python"]
+        prompt             = "Test repository"
+      }
+    ]
+  }
+
+  assert {
+    condition     = module.base_repository_files.files[".github/prompts/copilot-instructions.prompt.md"] != null
+    error_message = "Should create copilot instructions file"
+  }
+
+  assert {
+    condition     = module.base_repository_files.files[".github/prompts/copilot-instructions.prompt.md"].content == module.copilot.copilot_instructions
+    error_message = "Should add Copilot instructions file to base repository"
+  }
+}

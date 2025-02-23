@@ -47,9 +47,10 @@ locals {
     }
   }
 
-  # Development environment files that will be added to repositories
-  devcontainer_files = var.setup_dev_container ? [
+  # Development environment files
+  files = var.setup_dev_container ? [
     {
+      name = ".devcontainer/devcontainer.json"
       content = jsonencode({
         name = var.project_name
         build = {
@@ -65,24 +66,12 @@ locals {
         forwardPorts      = local.development_container.ports
         postCreateCommand = join(" && ", local.development_container.post_create_commands)
       })
-      name = ".devcontainer/devcontainer.json"
     },
     {
-      content = templatefile("${path.module}/templates/Dockerfile", {
+      name = ".devcontainer/Dockerfile"
+      content = templatefile("${path.module}/templates/Dockerfile.tpl", {
         base_image = local.development_container.base_image
       })
-      name = ".devcontainer/Dockerfile"
     }
   ] : []
-}
-
-# Development environment files are now handled by the base_repository_files module
-module "development_files" {
-  source = "./modules/repository_files"
-  count = can(var.development_container) ? 1 : 0
-  repository = module.base_repo.github_repo.name
-  branch     = module.base_repo.default_branch
-  files      = local.devcontainer_files
-
-  depends_on = [module.base_repo]
 }

@@ -1,23 +1,23 @@
 variables {
-  project_name = "test-e2e-${replace(uuid(), "-", "")}"  // Make project name unique
-  repo_org = "test-org"
-  project_prompt = "End-to-end test project"
+  project_name       = "test-e2e-${replace(uuid(), "-", "")}" // Make project name unique
+  repo_org           = "test-org"
+  project_prompt     = "End-to-end test project"
   github_pro_enabled = false
 }
 
 run "verify_end_to_end_repository_configuration" {
-  command = plan  // Use plan to avoid actual resource creation
+  command = plan // Use plan to avoid actual resource creation
 
   variables {
     base_repository = {
-      name = var.project_name  // Use dynamic project name
-      visibility = "public"  // Required for branch protection with GitHub Free
-      description = "Test base repository"
+      name               = var.project_name // Use dynamic project name
+      visibility         = "public"         // Required for branch protection with GitHub Free
+      description        = "Test base repository"
       archive_on_destroy = false
     }
     repositories = [
       {
-        name = "app-${replace(uuid(), "-", "")}"  // Make repo name unique
+        name = "app-${replace(uuid(), "-", "")}" // Make repo name unique
         github_repo_topics = [
           "typescript",
           "react",
@@ -26,18 +26,18 @@ run "verify_end_to_end_repository_configuration" {
           "terraform",
           "jest"
         ]
-        description = "Test application repository"
-        visibility = "public"  // Required for branch protection with GitHub Free
-        allow_merge_commit = false
-        allow_rebase_merge = true
+        description            = "Test application repository"
+        visibility             = "public" // Required for branch protection with GitHub Free
+        allow_merge_commit     = false
+        allow_rebase_merge     = true
         delete_branch_on_merge = true
-        prompt = "Test application repository for end-to-end testing"
+        prompt                 = "Test application repository for end-to-end testing"
       }
     ]
 
     vs_code_workspace = {
       settings = {
-        "editor.formatOnSave": true
+        "editor.formatOnSave" : true
       }
       extensions = {
         recommended = ["ms-python.python"]
@@ -63,17 +63,17 @@ run "verify_end_to_end_repository_configuration" {
 
   # Verify repository file creation using new module outputs
   assert {
-    condition = contains(module.base_repository_files.file_paths, "${var.project_name}.code-workspace")
+    condition     = contains(module.base_repository_files.file_paths, "${var.project_name}.code-workspace")
     error_message = "Workspace configuration file should be created"
   }
 
   assert {
-    condition = contains(module.base_repository_files.file_paths, ".devcontainer/devcontainer.json")
+    condition     = contains(module.base_repository_files.file_paths, ".devcontainer/devcontainer.json")
     error_message = "DevContainer configuration should be created"
   }
 
   assert {
-    condition = contains(module.base_repository_files.file_paths, ".devcontainer/docker-compose.yml")
+    condition     = contains(module.base_repository_files.file_paths, ".devcontainer/docker-compose.yml")
     error_message = "Docker Compose configuration should be created"
   }
 }

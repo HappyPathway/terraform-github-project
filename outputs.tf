@@ -133,8 +133,8 @@ output "repositories" {
 output "base_repository_files" {
   description = "Files created in the base repository"
   value = {
-    managed_files = module.base_repository_files.files
-    codeowners    = try(module.base_repository_files.files["CODEOWNERS"].content, null)
+    managed_files = var.mkfiles ? module.base_repository_files[0].files : []
+    codeowners    = var.mkfiles ? try(module.base_repository_files[0].files["CODEOWNERS"].content, null) : null
   }
 }
 

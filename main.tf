@@ -15,80 +15,14 @@ locals {
   }, { for k, v in var.base_repository : k => v if k != "managed_extra_files" })
 }
 
-# File configuration locals
-locals {
-  # Standard repository files
-  standard_files = [
-    {
-      content = templatefile("${path.module}/templates/README.md", {
-        project_name = var.project_name
-        description  = try(var.base_repository.description, "")
-      })
-      name = "README.md"
-    },
-    {
-      content = templatefile("${path.module}/templates/CODEOWNERS", {
-        codeowners = var.project_owners
-      })
-      name = ".github/CODEOWNERS"
-    },
-    {
-      content = file("${path.module}/templates/pull_request_template.md")
-      name    = ".github/pull_request_template.md"
-    }
-  ]
+# Development environment module
+module "development_environment" {
+  source = "./modules/development_environment"
 
-  # Project prompt files
-  project_prompt_files = [
-    {
-      content = var.project_prompt
-      name    = ".github/prompts/${var.project_name}.prompt.md"
-    }
-  ]
-
-  # VS Code workspace configuration
-  workspace_config_files = [
-    {
-      name = "${var.project_name}.code-workspace"
-      content = jsonencode({
-        folders    = local.workspace_folders,
-        settings   = try(local.effective_vscode.settings, {})
-        extensions = {
-          recommendations = distinct(concat(
-            try(var.vs_code_workspace.extensions.recommended, []),
-            try(var.vs_code_workspace.extensions.required, []),
-            ["github.copilot", "github.copilot-chat"]
-          ))
-        }
-        tasks = try(var.vs_code_workspace.tasks, [])
-        launch = {
-          version        = "0.2.0"
-          configurations = try(var.vs_code_workspace.launch_configurations, [])
-        }
-      })
-    }
-  ]
-
-  # Combine all files into a single list
-  all_repository_files = concat(
-    local.standard_files,
-    local.project_prompt_files,
-    local.workspace_config_files
-  )
-}
-
-# Repository files module
-module "repository_files" {
-  source = "./modules/repository_files"
-
-  repository = var.project_name
-  branch     = "main"
-  files      = local.all_repository_files
-
-  depends_on = [
-    module.base_repo,
-    module.project_repos
-  ]
+  project_name         = var.project_name
+  vs_code_workspace    = try(var.vs_code_workspace, {})
+  development_container = try(var.development_container, null)
+  setup_dev_container  = try(var.setup_dev_container, false)
 }
 
 # Security module

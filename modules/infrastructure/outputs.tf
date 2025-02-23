@@ -4,17 +4,17 @@ output "infrastructure_config" {
 }
 
 output "detected_iac_tools" {
-  description = "Infrastructure as Code tools detected from repository topics"
-  value       = local.iac_tools
+  description = "IaC tools detected from repository topics"
+  value       = local.detected_iac_tools
 }
 
 output "detected_cloud_providers" {
   description = "Cloud providers detected from repository topics"
-  value       = local.cloud_providers
+  value       = local.detected_cloud_providers
 }
 
 output "has_kubernetes" {
-  description = "Whether Kubernetes is used based on repository topics"
+  description = "Whether Kubernetes is used in the repositories"
   value       = local.has_kubernetes
 }
 
@@ -34,6 +34,22 @@ output "module_testing_frameworks" {
 }
 
 output "module_config" {
-  description = "Module configuration including all detected patterns"
+  description = "Module configuration details"
   value       = local.module_config
+}
+
+output "files" {
+  description = "List of files to be created by this module"
+  value = [
+    {
+      name = ".github/prompts/infrastructure-guidelines.prompt.md"
+      content = templatefile("${path.module}/templates/infrastructure-guidelines.prompt.md", {
+        repository_name = var.repositories[0].name
+        iac_tools       = local.detected_iac_tools
+        cloud_providers = local.detected_cloud_providers
+        has_kubernetes  = local.has_kubernetes
+        iac_config      = try(var.iac_config, {})
+      })
+    }
+  ]
 }

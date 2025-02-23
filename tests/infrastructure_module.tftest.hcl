@@ -1,6 +1,6 @@
 run "verify_infrastructure_patterns" {
   variables {
-    project_name = "test-infrastructure"
+    project_name   = "test-infrastructure"
     repo_org       = "HappyPathway"
     project_prompt = "Test project for infrastructure patterns"
     repositories = [

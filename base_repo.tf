@@ -10,40 +10,6 @@ locals {
     ),
     managed_extra_files = try(var.base_repository.managed_extra_files, [])
   })
-
-  # Base repository files
-  repo_files = [
-    {
-      name = "README.md",
-      content = templatefile("${path.module}/templates/README.md", {
-        project_name = var.project_name
-        description  = local.base_repo_config.description
-      })
-    },
-    {
-      name = ".github/CODEOWNERS",
-      content = templatefile("${path.module}/templates/CODEOWNERS", {
-        codeowners = concat(
-          try(local.base_repo_config.codeowners, []),
-          formatlist("* @%s", try(local.base_repo_config.admin_teams, []))
-        )
-      })
-    },
-    {
-      name    = ".github/copilot-instructions.md",
-      content = module.copilot.copilot_instructions
-    }
-  ]
-
-  # Handle managed extra files
-  extra_repo_files = local.base_repo_config.managed_extra_files == null ? [] : [
-    for file in local.base_repo_config.managed_extra_files : {
-      name    = file.path
-      content = file.content
-    }
-  ]
-
-  # VS Code workspace files
 }
 
 # Create base repository without branch protection or files initially
@@ -96,23 +62,6 @@ module "base_repo" {
   # Source template if specified
   template_repo     = try(local.base_repo_config.template.repository, null)
   template_repo_org = try(local.base_repo_config.template.owner, null)
-}
-
-module "base_repository_files" {
-  source = "./modules/repository_files"
-
-  repository = module.base_repo.github_repo.name
-  branch     = module.base_repo.default_branch
-  files = concat(
-    local.repo_files,
-    local.extra_repo_files,
-    [{
-      name    = "init.sh",
-      content = local.init_script_content
-    }]
-  )
-
-  depends_on = [module.base_repo]
 }
 
 # Add branch protection after files are created

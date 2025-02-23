@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        %{ if contains(languages, "python") }
+        python-version: ['3.8', '3.9', '3.10']
+        %{ endif }
+        %{ if contains(languages, "node") }
+        node-version: ['14.x', '16.x', '18.x']
+        %{ endif }
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      %{ if contains(languages, "python") }
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "$\{{ matrix.python-version }}"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      %{ endif }
+
+      %{ if contains(languages, "node") }
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "$\{{ matrix.node-version }}"
+      
+      - name: Install dependencies
+        run: npm ci
+      %{ endif }
+
+      - name: Run tests
+        run: |
+          %{ if contains(languages, "python") }
+          pytest
+          %{ endif }
+          %{ if contains(languages, "node") }
+          npm test
+          %{ endif }
