@@ -54,13 +54,11 @@ locals {
     module.copilot.files,
     [
       {
-        name = "scripts/init.py",
-        content = templatefile("${path.module}/templates/init.py.tpl", {
+        name = "scripts/projg",
+        content = templatefile("${path.module}/templates/project_git_manager.py.tpl", {
           project_name = var.project_name
           repo_org     = var.repo_org
-          repositories = jsonencode([
-            for repo in var.repositories : repo.name
-          ])
+          repositories = jsonencode(var.repositories)
         })
       },
       {
