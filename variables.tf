@@ -362,8 +362,8 @@ variable "setup_dev_container" {
   default     = false
 }
 
-variable mkfiles {
+variable "mkfiles" {
   description = "Are Repos Setup, can we add files now?"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }

@@ -38,3 +38,31 @@ variable "setup_dev_container" {
   default     = false
   description = "Whether to set up a development container"
 }
+
+variable "workspace_files" {
+  type = list(object({
+    name = string
+    path = string
+  }))
+  default     = []
+  description = "Additional files to include in the VS Code workspace configuration"
+}
+
+variable "repositories" {
+  type = list(any)
+  description = "List of repositories to include in the workspace"
+}
+
+locals {
+  workspace_folders = concat(
+    [{
+      name = var.project_name
+      path = "."
+    }],
+    [for repo in var.repositories : {
+      name = repo.name
+      path = "../${repo.name}"
+    }],
+    var.workspace_files
+  )
+}

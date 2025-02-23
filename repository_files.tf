@@ -7,6 +7,13 @@ locals {
       content = templatefile("${path.module}/templates/README.md", {
         project_name = var.project_name
         description  = try(var.base_repository.description, "")
+        repo_org     = var.repo_org
+        repositories = [
+          for repo in var.repositories : {
+            repo             = repo.name
+            repo_description = try(repo.description, "")
+          }
+        ]
       })
     },
     {
@@ -18,6 +25,14 @@ locals {
     {
       name    = ".github/pull_request_template.md",
       content = file("${path.module}/templates/pull_request_template.md")
+    },
+    {
+      name = "scripts/init.sh",
+      content = templatefile("${path.module}/templates/init.sh.tpl", {
+        project_name = var.project_name
+        repo_org     = var.repo_org
+        repositories = var.repositories
+      })
     }
   ]
 
@@ -31,41 +46,45 @@ locals {
 
   # VS Code workspace configuration from development_environment module
   workspace_config_files = [
+    for file in module.development_environment.files :
     {
-      name = "${var.project_name}.code-workspace"
-      content = jsonencode({
-        folders  = local.workspace_folders,
-        settings = module.development_environment.workspace_config.settings
-        extensions = {
-          recommendations = module.development_environment.workspace_config.extensions.recommended
-        }
-        tasks   = module.development_environment.workspace_config.tasks
-        launch = {
-          version        = "0.2.0"
-          configurations = module.development_environment.workspace_config.launch
-        }
-      })
-    }
-  ]
-
-  # Module files reorganized
-  base_module_files = [
-    for file in concat(
-      module.security.files,
-      module.development.files,
-      module.infrastructure.files,
-      module.quality.files,
-      module.development_environment.files
-    ) : {
-      name    = ".github/prompts/${file.name}"
+      name    = file.name
       content = file.content
     }
   ]
 
-  # Copilot files for all repos
+  # Module-specific files consolidated in base repo
+  base_module_files = concat(
+    [
+      for file in module.security.files : {
+        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
+        content = file.content
+      }
+    ],
+    [
+      for file in module.development.files : {
+        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
+        content = file.content
+      }
+    ],
+    [
+      for file in module.infrastructure.files : {
+        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
+        content = file.content
+      }
+    ],
+    [
+      for file in module.quality.files : {
+        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
+        content = file.content
+      }
+    ]
+  )
+
+  # Copilot files - one per repo with consistent naming
   copilot_files = [
     for file in module.copilot.files : {
-      name    = ".github/prompts/${var.project_name}.copilot.md"
+      name    = ".github/prompts/${basename(var.project_name)}.copilot.md"
       content = file.content
     }
   ]
@@ -78,21 +97,28 @@ locals {
     }
   ]
 
-  # Repository-specific prompts
+  # Repository-specific prompts with standardized naming
   repo_specific_prompt_files = {
     for name, repo in local.project_repositories : name => [
       {
-        name    = ".github/prompts/${name}.prompt.md"
+        name = ".github/prompts/${basename(name)}.prompt.md"
         content = trimspace(coalesce(
           try(repo.prompt, null),
-          try(repo.description, "Repository-specific prompt for ${name}")
+          try(repo.description, "Repository-specific prompt for ${basename(name)}")
         ))
       }
     ]
   }
+
+  # Generate init script content
+  init_script_content = templatefile("${path.module}/templates/init.sh.tpl", {
+    project_name = var.project_name
+    repo_org     = var.repo_org
+    repositories = [for repo in var.repositories : repo.name]
+  })
 }
 
-# Base repository files module
+# Base repository files module (gets all module files and base config)
 module "base_repository_files" {
   source = "./modules/repository_files"
 
@@ -100,21 +126,17 @@ module "base_repository_files" {
   branch     = module.base_repo.default_branch
   files = concat(
     local.standard_files,
-    local.project_prompt_file, # Project prompt only goes to base repo
+    local.project_prompt_file,
     local.extra_repo_files,
     local.base_module_files,
     local.copilot_files,
-    [{
-      name    = "init.sh",
-      content = local.init_script_content
-    }],
     local.workspace_config_files
   )
 
   depends_on = [module.base_repo]
 }
 
-# Project repository files module
+# Project repository files module (gets only repo-specific files)
 module "project_repository_files" {
   source = "./modules/repository_files"
   for_each = {
@@ -125,9 +147,8 @@ module "project_repository_files" {
   branch     = module.project_repos[each.key].default_branch
   files = concat(
     local.standard_files,
-    local.repo_specific_prompt_files[each.key], # Each repo gets its own prompt file
-    local.copilot_files,
-    try(each.value.extra_files, [])
+    local.repo_specific_prompt_files[each.key],
+    local.copilot_files
   )
 
   depends_on = [module.project_repos]

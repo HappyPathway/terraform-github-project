@@ -19,10 +19,12 @@ locals {
 module "development_environment" {
   source = "./modules/development_environment"
 
-  project_name         = var.project_name
-  vs_code_workspace    = try(var.vs_code_workspace, {})
+  project_name          = var.project_name
+  vs_code_workspace     = try(var.vs_code_workspace, {})
   development_container = try(var.development_container, null)
-  setup_dev_container  = try(var.setup_dev_container, false)
+  setup_dev_container   = try(var.setup_dev_container, false)
+  repositories          = var.repositories
+  workspace_files       = try(var.workspace_files, [])
 }
 
 # Security module
