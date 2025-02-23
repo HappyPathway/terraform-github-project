@@ -5,8 +5,8 @@ locals {
   # Only enable branch protection for public repos or when GitHub Pro is enabled
   branch_protection_enabled = {
     for name, repo in local.project_repositories : name => (
-      try(repo.create_repo, true) &&
       try(repo.enable_branch_protection, true) &&
+      repo.enforce_prs &&
       (try(repo.visibility, "private") == "public" || var.github_pro_enabled)
     )
   }
@@ -20,7 +20,8 @@ module "project_repos" {
   name                    = each.key
   repo_org                = var.repo_org
   create_repo             = try(each.value.create_repo, true)
-  enforce_prs             = false # Disable branch protection initially
+  force_name              = try(each.value.force_name, true)
+  enforce_prs             = lookup(local.branch_protection_enabled, each.key, false)
   github_repo_description = try(each.value.description, "Repository for the ${var.project_name} project in ${module.base_repo.github_repo.name}")
   github_repo_topics      = try(each.value.topics, module.base_repo.github_repo.topics)
   github_is_private       = try(each.value.visibility, module.base_repo.github_repo.visibility) == "private"

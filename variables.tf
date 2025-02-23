@@ -94,7 +94,7 @@ variable "repositories" {
     })))
     pull_request_bypassers = optional(list(string), [])
     create_codeowners      = optional(bool, true)
-    enforce_prs            = optional(bool, true)
+    enforce_prs            = optional(bool, false)
     collaborators          = optional(map(string), {})
     archive_on_destroy     = optional(bool, true)
     vulnerability_alerts   = optional(bool, false)
@@ -363,7 +363,7 @@ variable "setup_dev_container" {
 }
 
 variable "mkfiles" {
-  description = "Are Repos Setup, can we add files now?"
   type        = bool
+  description = "Whether to create repository files. Set to false for initial repo creation, then true to create files."
   default     = false
 }

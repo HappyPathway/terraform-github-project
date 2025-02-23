@@ -87,8 +87,13 @@ run "verify_file_creation" {
   }
 
   assert {
-    condition     = module.development.copilot_instructions["test-repo"].file == ".github/copilot-instructions.md"
-    error_message = "Should create copilot instructions file in correct location"
+    condition     = module.project_repository_files["test-repo"].files[".github/copilot-instructions.md"] != null
+    error_message = "Should create copilot-instructions.md file"
+  }
+
+  assert {
+    condition     = module.project_repository_files["test-repo"].files[".github/prompts/test-repo.prompt.md"] != null
+    error_message = "Should create prompt file in .github/prompts"
   }
 }
 
@@ -143,8 +148,6 @@ run "verify_workspace_file_creation" {
 }
 
 run "verify_repo_settings" {
-  command = plan
-
   variables {
     project_name   = "test-repo-settings"
     project_prompt = "Test project for repository settings"

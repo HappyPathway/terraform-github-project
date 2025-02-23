@@ -47,14 +47,19 @@ EOT
 
   repository_files = {
     for repo in var.repositories : repo.name => {
-      copilot_instructions = {
-        path    = ".github/prompts/copilot-setup.md"
-        content = local.copilot_instructions
-      }
       repo_prompt = lookup(repo, "prompt", null) != null ? {
-        path    = ".github/prompts/repo-setup.prompt.md"
+        path    = ".github/prompts/${repo.name}.prompt.md"
         content = repo.prompt
       } : null
     }
   }
+
+  files = flatten([
+    for repo_name, files in local.repository_files : [
+      files.repo_prompt == null ? {} : {
+        name    = files.repo_prompt.path
+        content = files.repo_prompt.content
+      }
+    ]
+  ])
 }

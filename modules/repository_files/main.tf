@@ -1,9 +1,9 @@
 # Manage repository files
 resource "github_repository_file" "files" {
-  for_each = {
+  for_each = var.mkfiles ? {
     for file in var.files : file.name => file
-  }
-
+  } : {}
+  
   repository          = var.repository
   branch              = var.branch
   file                = each.key

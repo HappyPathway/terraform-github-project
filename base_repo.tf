@@ -14,16 +14,16 @@ locals {
 
 # Create base repository without branch protection or files initially
 module "base_repo" {
-  source = "HappyPathway/repo/github"
-
+  source  = "HappyPathway/repo/github"
+  version = "1.0.67"
   # Ensure required parameters are set
   name       = var.project_name
   repo_org   = var.repo_org
   force_name = true # Prevent date suffix
 
   # Basic repository settings
-  create_repo             = true
-  enforce_prs             = false # Disable branch protection initially
+  create_repo             = try(local.base_repo_config.create_repo, true)
+  enforce_prs             = try(local.base_repo_config.enforce_prs, false)
   github_repo_description = local.base_repo_config.description
   github_repo_topics      = local.base_repo_config.topics
   github_is_private       = local.base_repo_config.visibility == "private"

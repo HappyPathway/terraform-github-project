@@ -1,6 +1,6 @@
 output "copilot_instructions" {
-  description = "GitHub Copilot instructions configuration"
-  value       = local.copilot_instructions
+  description = "GitHub Copilot instructions generated for repositories"
+  value       = local.copilot_instructions != "" ? local.copilot_instructions : local.generated_copilot_instructions
 }
 
 output "detected_languages" {
@@ -47,7 +47,7 @@ output "files" {
   description = "List of files to be created by this module"
   value = [
     {
-      name = ".github/prompts/copilot-instructions.prompt.md"
+      name = ".github/copilot-instructions.md"
       content = templatefile("${path.module}/templates/copilot-instructions.prompt.md", {
         project_name    = var.project_name
         repository_name = var.repositories[0].name
@@ -61,4 +61,13 @@ output "files" {
       })
     }
   ]
+}
+
+output "copilot_files" {
+  description = "List of Copilot instruction files and prompts"
+  value = {
+    instructions_path = ".github/copilot-instructions.md"
+    instructions      = local.copilot_instructions != "" ? local.copilot_instructions : local.generated_copilot_instructions
+    prompts           = local.repository_files
+  }
 }

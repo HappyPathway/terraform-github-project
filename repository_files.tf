@@ -6,12 +6,12 @@ locals {
       name = "README.md",
       content = templatefile("${path.module}/templates/README.md", {
         project_name = var.project_name
-        description  = lookup(var.base_repository, "description", var.project_name)
+        description  = coalesce(try(var.base_repository.description, ""), var.project_name, "")
         repo_org     = var.repo_org
         repositories = [
           for repo in var.repositories : {
             repo             = repo.name
-            repo_description = lookup(repo, "description", "${var.project_name}::${repo.name}")  # Ensure empty string if null
+            repo_description = lookup(repo, "description", "${var.project_name}::${repo.name}") # Ensure empty string if null
           }
         ]
       })
@@ -25,18 +25,6 @@ locals {
     {
       name    = ".github/pull_request_template.md",
       content = file("${path.module}/templates/pull_request_template.md")
-    },
-    {
-      name    = "scripts/init.py",
-      content = templatefile("${path.module}/templates/init.py.tpl", {
-        project_name = var.project_name
-        repo_org     = var.repo_org
-        repositories = jsonencode(var.repositories)
-      })
-    },
-    {
-      name    = "scripts/requirements.txt",
-      content = file("${path.module}/templates/requirements.txt")
     }
   ]
 
@@ -57,41 +45,40 @@ locals {
     }
   ]
 
-  # Module-specific files consolidated in base repo
+  # Module files from various feature modules - keep original paths from modules
   base_module_files = concat(
+    module.security.files,
+    module.development.files,
+    module.infrastructure.files,
+    module.quality.files,
+    module.copilot.files,
     [
-      for file in module.security.files : {
-        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
-        content = file.content
-      }
-    ],
-    [
-      for file in module.development.files : {
-        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
-        content = file.content
-      }
-    ],
-    [
-      for file in module.infrastructure.files : {
-        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
-        content = file.content
-      }
-    ],
-    [
-      for file in module.quality.files : {
-        name    = contains(split("/", file.name), "prompts") ? file.name : ".github/prompts/${file.name}"
-        content = file.content
+      {
+        name = "scripts/init.py",
+        content = templatefile("${path.module}/templates/init.py.tpl", {
+          project_name = var.project_name
+          repo_org     = var.repo_org
+          repositories = jsonencode([
+            for repo in var.repositories : repo.name
+          ])
+        })
+      },
+      {
+        name    = "scripts/requirements.txt",
+        content = file("${path.module}/templates/requirements.txt")
       }
     ]
   )
 
-  # Copilot files - one per repo with consistent naming
-  copilot_files = [
-    for file in module.copilot.files : {
-      name    = ".github/prompts/${basename(var.project_name)}.copilot.md"
-      content = file.content
-    }
-  ]
+  # Copilot prompts - repo-specific prompts only
+  repo_copilot_prompts = {
+    for name, repo in local.project_repositories : name => [
+      {
+        name    = ".github/prompts/${name}.prompt.md"
+        content = repo.prompt == null ? try(repo.description, "Repository-specific prompt for ${name}") : repo.prompt
+      }
+    ]
+  }
 
   # Handle managed extra files for base repo
   extra_repo_files = local.base_repo_config.managed_extra_files == null ? [] : [
@@ -101,17 +88,21 @@ locals {
     }
   ]
 
-  # Repository-specific prompts with standardized naming
-  repo_specific_prompt_files = {
-    for name, repo in local.project_repositories : name => [
-      {
-        name = ".github/prompts/${basename(name)}.prompt.md"
-        content = trimspace(coalesce(
-          try(repo.prompt, null),
-          try(repo.description, "Repository-specific prompt for ${basename(name)}")
-        ))
-      }
-    ]
+  # Base repository files module (gets all module files and base config)
+  repository_files = concat(
+    local.standard_files,
+    local.project_prompt_file,
+    local.extra_repo_files,
+    local.base_module_files,
+    local.workspace_config_files
+  )
+
+  # Project repository files module (gets only repo-specific files)
+  project_repository_files = {
+    for name, repo in local.project_repositories : name => concat(
+      local.standard_files,
+      local.repo_copilot_prompts[name] # Only this repo's specific prompt
+    )
   }
 }
 
@@ -121,14 +112,8 @@ module "base_repository_files" {
 
   repository = module.base_repo.github_repo.name
   branch     = module.base_repo.default_branch
-  files = concat(
-    local.standard_files,
-    local.project_prompt_file,
-    local.extra_repo_files,
-    local.base_module_files,
-    local.copilot_files,
-    local.workspace_config_files
-  )
+  files      = local.repository_files
+  mkfiles    = var.mkfiles
 
   depends_on = [module.base_repo]
 }
@@ -142,11 +127,8 @@ module "project_repository_files" {
 
   repository = each.key
   branch     = module.project_repos[each.key].default_branch
-  files = concat(
-    local.standard_files,
-    local.repo_specific_prompt_files[each.key],
-    local.copilot_files
-  )
+  files      = local.project_repository_files[each.key]
+  mkfiles    = var.mkfiles
 
   depends_on = [module.project_repos]
 }
