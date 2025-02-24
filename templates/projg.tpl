@@ -10,6 +10,73 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Union
 
+class DocSourceManager:
+    def __init__(self):
+        self.config_path = Path(".projg")
+        self.config = self.load_config()
+        self.semaphore = asyncio.Semaphore(5)
+
+    def load_config(self) -> Dict:
+        """Load .projg configuration file"""
+        if not self.config_path.exists():
+            return {"docs_base_path": "~/.projg/docs", "documentation_sources": []}
+        return json.loads(self.config_path.read_text())
+
+    def expand_path(self, path: str) -> str:
+        """Expand environment variables and ~ in path"""
+        return os.path.expandvars(os.path.expanduser(path))
+
+    async def clone_doc_repo(self, repo: Dict) -> bool:
+        """Clone a documentation repository"""
+        try:
+            base_path = Path(self.expand_path(self.config["docs_base_path"]))
+            repo_dir = base_path / repo["name"]
+            if repo_dir.exists():
+                print(f"Documentation repo {repo['name']} exists, checking out {repo['tag']}...")
+                process = await asyncio.create_subprocess_exec(
+                    "git", "-C", str(repo_dir), "fetch", "--all",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+                process = await asyncio.create_subprocess_exec(
+                    "git", "-C", str(repo_dir), "checkout", repo["tag"],
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+            else:
+                print(f"Cloning documentation repo {repo['name']}...")
+                repo_dir.parent.mkdir(parents=True, exist_ok=True)
+                process = await asyncio.create_subprocess_exec(
+                    "git", "clone", "--depth", "1", "-b", repo["tag"],
+                    repo["repo"], str(repo_dir),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+            return True
+        except Exception as e:
+            print(f"Error processing documentation repo {repo['name']}: {e}")
+            return False
+
+    async def process_doc_sources(self) -> None:
+        """Process all documentation sources"""
+        if not self.config["documentation_sources"]:
+            return
+
+        print("\nProcessing documentation sources...")
+        base_path = Path(self.expand_path(self.config["docs_base_path"]))
+        base_path.mkdir(parents=True, exist_ok=True)
+
+        tasks = []
+        for source in self.config["documentation_sources"]:
+            tasks.append(self.clone_doc_repo(source))
+        
+        results = await asyncio.gather(*tasks)
+        success = all(results)
+        print("✅ Documentation sources processed" if success else "❌ Some documentation sources failed")
+
 class ProjectInitializer:
     def __init__(self, project_name: str, repo_org: str, repositories: str):
         self.project_name = project_name
@@ -282,10 +349,10 @@ class ProjectInitializer:
     async def run(self, nuke: bool = False) -> None:
         """Initialize or nuke the project workspace"""
         print(f"{'Nuking' if nuke else 'Initializing'} project: {self.project_name}")
-
+        
         # Create parent directory
         os.makedirs(self.base_dir, exist_ok=True)
-
+        
         # Verify Git SSH access
         print("\nVerifying Git SSH access to GitHub...")
         if not await self.verify_git_ssh():
@@ -293,12 +360,17 @@ class ProjectInitializer:
             print("Please check your SSH configuration")
             sys.exit(1)
         print("✅ Git SSH access verified")
-
+        
         # Process repositories in parallel
         tasks = [self.nuke_repository(repo) if nuke else self.process_repository(repo) 
                 for repo in self.repositories]
         await asyncio.gather(*tasks)
-
+        
+        # Process documentation sources if not nuking
+        if not nuke:
+            doc_manager = DocSourceManager()
+            await doc_manager.process_doc_sources()
+        
         print(f"\n✅ Project {'nuked' if nuke else 'initialization'} complete!")
 
 def main():

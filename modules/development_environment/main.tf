@@ -47,6 +47,23 @@ locals {
     ])
   ]))
 
+  # Documentation folders for workspace
+  doc_folders = [
+    for source in var.documentation_sources : {
+      name = source.name
+      path = "${var.docs_base_path}/${source.name}/${source.path}"
+    }
+  ]
+
+  # Workspace folders (combine existing and documentation folders)
+  workspace_folders = concat(
+    [for repo in var.repositories : {
+      name = repo.name
+      path = "../${repo.name}"
+    }],
+    local.doc_folders
+  )
+
   effective_vscode = {
     settings = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
     extensions = {
@@ -84,6 +101,12 @@ locals {
       enabled  = false
       services = {}
     }
+  }
+
+  # .projg configuration
+  projg_config = {
+    docs_base_path = var.docs_base_path
+    documentation_sources = var.documentation_sources
   }
 
   # Development environment files
@@ -130,6 +153,13 @@ locals {
             configurations = local.effective_vscode.launch_configurations
           }
         })
+      }
+    ],
+    # .projg configuration
+    [
+      {
+        name = ".projg"
+        content = jsonencode(local.projg_config)
       }
     ]
   )

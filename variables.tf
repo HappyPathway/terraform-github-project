@@ -367,3 +367,20 @@ variable "mkfiles" {
   description = "Whether to create repository files. Set to false for initial repo creation, then true to create files."
   default     = false
 }
+
+variable "documentation_sources" {
+  type = list(object({
+    repo = string  # GitHub repository URL to clone
+    name = string  # Name to use in workspace file
+    path = string  # Path within the cloned repo to reference
+    tag  = optional(string, "main")  # Optional, defaults to main
+  }))
+  description = "List of external repositories to clone as documentation/reference sources"
+  default     = []
+}
+
+variable "docs_base_path" {
+  type        = string
+  description = "Base path where documentation repositories will be cloned. Supports environment variables (VAR) and shell expansion (~)"
+  default     = "~/.projg/docs"
+}

@@ -3,32 +3,20 @@
 ## Overview
 Add support for cloning external documentation repositories with specific tag/branch support. The terraform module will generate both the .projg configuration file and the projg script, with all values sourced from terraform variables.
 
-## Terraform Variable Structure
-```hcl
-variable "documentation_sources" {
-  type = list(object({
-    repo = string  # GitHub repository URL to clone
-    name = string  # Name to use in workspace file
-    path = string  # Path within the cloned repo to reference
-    tag  = optional(string, "main")  # Optional, defaults to main
-  }))
-  description = "List of external repositories to clone as documentation/reference sources"
-  default     = []
-}
+## Move projg.tpl to projg, no longer needs to be template due to externalized config file
 
-variable "docs_base_path" {
-  type        = string
-  description = "Base path where documentation repositories will be cloned. Supports environment variables (${VAR}) and shell expansion (~)"
-  default     = "~/.projg/docs"
-}
-```
+## Nuke should not remove documentation sources
+since documentation sources will probably be shared across multiple projects, a nuke operation should not wipe out the documentation sources.
+
 
 ## Generated Configuration (.projg file)
 The terraform module will generate this file using the variable values in a simple JSON format (which Terraform handles reliably):
 ```json
 {
   "docs_base_path": "${docs_base_path}",
-  "documentation_sources": ${jsonencode(documentation_sources)}
+  "documentation_sources": ${jsonencode(documentation_sources)},
+  "project_name": "${project_name}",
+  "repo_org": "${repo_org}"
 }
 ```
 
@@ -84,38 +72,7 @@ def clone_doc_source(repo: str, tag: str = "main") -> bool:
    - Test workspace file generation
    - Test with various variable combinations
 
-## Example Usage in terraform.tfvars
-```hcl
-docs_base_path = "~/work/reference-docs"
 
-documentation_sources = [
-  {
-    repo = "https://github.com/terraform-docs/terraform-docs"
-    name = "tf-docs-reference"
-    path = "docs/reference"
-    tag  = "v0.16.0"
-  },
-  {
-    repo = "https://github.com/terraform-docs/terraform-docs"
-    name = "tf-docs-examples"
-    path = "examples"
-    tag  = "main"
-  }
-]
-```
-
-## Workspace File Integration Example
-```jsonc
-{
-  "folders": [
-    // ... existing workspace folders ...
-    {
-      "name": "tf-docs-reference",
-      "path": "${workspaceFolder}/.projg/docs/terraform-docs/docs/reference"
-    }
-  ]
-}
-```
 
 ## Considerations
 - All configuration comes from terraform variables

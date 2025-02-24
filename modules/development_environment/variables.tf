@@ -53,6 +53,23 @@ variable "repositories" {
   description = "List of repositories to include in the workspace"
 }
 
+variable "documentation_sources" {
+  type = list(object({
+    repo = string
+    name = string
+    path = string
+    tag  = optional(string, "main")
+  }))
+  description = "List of external repositories to clone as documentation/reference sources"
+  default     = []
+}
+
+variable "docs_base_path" {
+  type        = string
+  description = "Base path where documentation repositories will be cloned. Supports environment variables (${VAR}) and shell expansion (~)"
+  default     = "~/.projg/docs"
+}
+
 locals {
   workspace_folders = concat(
     [{

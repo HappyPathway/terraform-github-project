@@ -3,6 +3,21 @@ locals {
   # Core repository files for all repos
   standard_files = [
     {
+      name = ".projg",
+      content = jsonencode({
+        project_name = var.project_name
+        repo_org = var.repo_org
+        docs_base_path = var.docs_base_path
+        documentation_sources = var.documentation_sources
+        repositories = [
+          for repo in var.repositories : {
+            name = repo.name
+            description = lookup(repo, "description", "${var.project_name}::${repo.name}")
+          }
+        ]
+      })
+    },
+    {
       name = "README.md",
       content = templatefile("${path.module}/templates/README.md", {
         project_name = var.project_name
