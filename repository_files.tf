@@ -62,7 +62,7 @@ locals {
     [
       {
         name    = "scripts/gproj",
-        content = file("${path.module}/scripts/gproj")
+        content = file("${path.module}/scripts/gproj") # Use gproj script directly instead of template
       },
       {
         name    = "scripts/requirements.txt",
@@ -77,13 +77,12 @@ locals {
     content = templatefile("${path.module}/templates/gproj.json.tftpl", {
       project_name   = var.project_name
       repo_org       = var.repo_org
-      project_prompt = var.project_prompt
-      docs_base_path = "~/.gproj/docs"
+      docs_base_path = "~/.gproj/docs" # Base path, repos will be direct children
       documentation_sources = [
         for source in var.documentation_sources : {
           repo = source.repo
           name = replace(source.name, "^docs/+", "")
-          path = coalesce(source.path, ".")
+          path = coalesce(source.path, ".") # Keep original path for workspace mapping
           tag  = try(source.tag, "main")
         }
       ]

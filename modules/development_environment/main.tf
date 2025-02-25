@@ -57,23 +57,44 @@ locals {
     ])
   ]))
 
-  # Processes and validates documentation folder paths
-  # Ensures all documentation paths are properly formatted and located under .gproj/docs/{orgName}/{repoName} directory
-  doc_folders = [
+  # Extract just the repo name from a URL or org/repo format
+  extract_repo_name = { for source in var.documentation_sources :
+    source.name => (
+      replace(
+        # Take the last part after / or :
+        element(
+          split("/", 
+            replace(
+              replace(source.repo, "^git@[^:]+:", ""), 
+              "^https?://[^/]+/", ""
+            )
+          ),
+          -1
+        ),
+        "\\.git$", "" # Remove .git suffix if present
+      )
+    )
+  }
+
+  # Process documentation sources to maintain consistent paths
+  doc_folders = distinct([
     for source in var.documentation_sources : {
       name = source.name
-      path = "${var.docs_base_path}/${var.repo_org}/${var.project_name}/${source.name}"
+      path = join("/", compact([
+        var.docs_base_path,
+        local.extract_repo_name[source.name],
+        source.path  # Include the path within the repository
+      ]))
     }
-  ]
+  ])
 
-  # Processes and validates repository folder paths
-  # Ensures all repository paths are relative to the parent directory
-  repo_folders = [
+  # Process repository paths
+  repo_folders = distinct([
     for repo in var.repositories : {
       name = repo.name
       path = "../${repo.name}"
     }
-  ]
+  ])
 
   # Combines all workspace folders into a single distinct list
   # This includes repository folders, documentation folders, and additional workspace files

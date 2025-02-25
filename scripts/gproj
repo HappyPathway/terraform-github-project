@@ -25,6 +25,7 @@ import json                 # For reading/writing JSON configuration
 import os                   # For file and path operations
 import sys                 # For system operations like exit()
 import shutil              # For file/directory operations
+import re                   # Added for URL regex
 from datetime import datetime
 from pathlib import Path    # For better path handling
 from typing import List, Dict, Union  # For type hints
@@ -62,7 +63,12 @@ class DocSourceManager:
                  Always includes a docs_base_path setting.
         """
         if not self.config_path.exists():
-            return {"docs_base_path": "~/.gproj/docs", "documentation_sources": []}
+            return {
+                "project_name": "",
+                "repo_org": "",
+                "docs_base_path": "",  # Will be set by .gproj config
+                "documentation_sources": []
+            }
         return json.loads(self.config_path.read_text())
 
     def expand_path(self, path: str) -> str:
@@ -81,71 +87,93 @@ class DocSourceManager:
         """
         return os.path.expandvars(os.path.expanduser(path))
 
-    def transform_doc_path(self, source: Dict) -> str:
-        """
-        Figure out where to store a documentation repository locally.
+    def extract_org_repo(self, repo_url: str) -> tuple[str, str]:
+        """Extract organization and repository name from a repo URL or org/repo format.
         
-        Takes a documentation source (which includes a Git URL) and determines
-        the local folder where it should be stored. The path will be organized
-        like this: ~/.gproj/docs/organization-name/repository-name
+        Handles formats:
+        - git@github.com:org/repo.git
+        - https://github.com/org/repo
+        - org/repo
+        
+        Returns:
+            tuple: (organization, repository_name)
+        """
+        if repo_url.startswith(('http://', 'https://')):
+            # Extract org/repo from HTTPS URL
+            match = re.search(r'https?://[^/]+/([^/]+)/([^/]+?)(?:\.git)?/?$', repo_url)
+            if not match:
+                raise ValueError(f"Invalid repository URL format: {repo_url}")
+            return match.group(1), match.group(2)
+        elif repo_url.startswith('git@'):
+            # Extract org/repo from SSH URL
+            match = re.search(r'git@[^:]+:([^/]+)/([^/]+?)(?:\.git)?/?$', repo_url)
+            if not match:
+                raise ValueError(f"Invalid SSH URL format: {repo_url}")
+            return match.group(1), match.group(2)
+        else:
+            # Handle plain org/repo format
+            if '/' not in repo_url:
+                raise ValueError("Repository must be in format 'org/repo' or a valid URL")
+            org, repo = repo_url.split('/', 1)
+            # Remove .git suffix if present
+            repo = re.sub(r'\.git$', '', repo)
+            return org, repo
+
+    def extract_repo_name(self, repo_url: str) -> str:
+        """Extract just the repository name from a URL or org/repo format.
+        
+        Handles:
+        - git@github.com:org/repo.git -> repo
+        - https://github.com/org/repo -> repo
+        - org/repo -> repo
+        
+        Returns:
+            str: Repository name without .git suffix
+        """
+        # Remove .git suffix if present
+        repo_url = re.sub(r'\.git$', '', repo_url)
+        
+        # Extract the last part after / or :
+        return repo_url.split('/')[-1].split(':')[-1]
+
+    def transform_doc_path(self, source: Dict) -> str:
+        """Transform documentation source path to storage location.
         
         Args:
             source: Dictionary containing repository information
-                   Must include a 'repo' key with the Git URL
+                   Must include 'repo' key
                    
         Returns:
             str: The full path where the repository should be stored
-            
-        Raises:
-            ValueError: If the source doesn't include a repo URL
         """
+        if not self.config.get("docs_base_path"):
+            print("❌ No docs_base_path specified in .gproj configuration")
+            sys.exit(1)
+            
         base_path = self.expand_path(self.config["docs_base_path"])
         repo_url = source.get("repo", "")
-        if not repo_url:
-            raise ValueError("repo is required in documentation source config")
+        repo_name = self.extract_repo_name(repo_url)
         
-        # Clean up the repository URL to get just the organization and repository names
-        cleaned_url = (repo_url
-            .replace("git@", "")           # Remove git@ prefix for SSH URLs
-            .replace(":", "/")             # Convert SSH separator to path separator
-            .replace("https://", "")       # Remove https:// prefix for HTTPS URLs
-            .replace(".git", ""))          # Remove .git suffix
-        
-        # Get just the organization and repository name parts
-        parts = cleaned_url.split("/")
-        org_repo = "/".join(parts[-2:])
-        return str(Path(base_path) / org_repo)
+        return str(Path(base_path) / repo_name)
 
     async def clone_doc_repo(self, source: Dict) -> bool:
-        """
-        Clone or update a documentation repository.
-        
-        This function will:
-        1. Check if the repository exists locally
-        2. If it exists: fetch updates and checkout the right version
-        3. If it doesn't exist: clone it and checkout the right version
-        
-        Args:
-            source: Dictionary with repository details including:
-                   - repo: Git URL
-                   - tag: Which version to check out (defaults to 'main')
-                   
-        Returns:
-            bool: True if successful, False if there was an error
-        """
+        """Clone or update a documentation repository."""
         try:
             repo_dir = Path(self.transform_doc_path(source))
-            repo_name = repo_dir.name
+            repo_url = source["repo"]
+            
+            # If it's just org/repo format, convert to SSH URL
+            if not any(repo_url.startswith(prefix) for prefix in ('http://', 'https://', 'git@')):
+                repo_url = f"git@github.com:{repo_url}.git"
+            
             if repo_dir.exists():
-                print(f"Documentation repo {repo_name} exists, checking out {source.get('tag', 'main')}...")
-                # Update the existing repository
+                print(f"Documentation repo {repo_dir.name} exists, updating...")
                 process = await asyncio.create_subprocess_exec(
                     "git", "-C", str(repo_dir), "fetch", "--all",
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
                 await process.communicate()
-                # Checkout the specified version
                 process = await asyncio.create_subprocess_exec(
                     "git", "-C", str(repo_dir), "checkout", source.get("tag", "main"),
                     stdout=asyncio.subprocess.PIPE,
@@ -153,17 +181,36 @@ class DocSourceManager:
                 )
                 await process.communicate()
             else:
-                print(f"Cloning documentation repo {repo_name}...")
-                # Make sure the parent directory exists
+                print(f"Cloning documentation repo {repo_dir.name}...")
                 repo_dir.parent.mkdir(parents=True, exist_ok=True)
-                # Clone the repository
                 process = await asyncio.create_subprocess_exec(
-                    "git", "clone", source["repo"], str(repo_dir),
+                    "git", "clone", repo_url, str(repo_dir),
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
-                await process.communicate()
-                # If a specific version was requested, check it out
+                _, stderr = await process.communicate()
+                if process.returncode != 0:
+                    # If SSH fails, fall back to HTTPS
+                    if "Permission denied (publickey)" in stderr.decode():
+                        print("SSH authentication failed, trying HTTPS...")
+                        # Convert to HTTPS URL if needed
+                        if repo_url.startswith('git@'):
+                            repo_url = re.sub(r'git@([^:]+):', r'https://\1/', repo_url)
+                        if not repo_url.startswith(('http://', 'https://')):
+                            repo_url = f"https://github.com/{repo_url}"
+                        process = await asyncio.create_subprocess_exec(
+                            "git", "clone", repo_url, str(repo_dir),
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+                        _, stderr = await process.communicate()
+                        if process.returncode != 0:
+                            print(f"❌ Failed to clone {repo_dir.name}: {stderr.decode()}")
+                            return False
+                    else:
+                        print(f"❌ Failed to clone {repo_dir.name}: {stderr.decode()}")
+                        return False
+                
                 if source.get("tag"):
                     process = await asyncio.create_subprocess_exec(
                         "git", "-C", str(repo_dir), "checkout", source["tag"],
@@ -171,9 +218,10 @@ class DocSourceManager:
                         stderr=asyncio.subprocess.PIPE
                     )
                     await process.communicate()
+
             return True
         except Exception as e:
-            print(f"❌ Error processing {repo_name}: {str(e)}")
+            print(f"❌ Error processing {repo_dir.name if 'repo_dir' in locals() else source.get('name', 'unknown')}: {str(e)}")
             return False
 
     async def process_doc_sources(self) -> None:
@@ -243,21 +291,9 @@ class ProjectInitializer:
         self.semaphore = asyncio.Semaphore(5)
 
     async def clone_repo(self, repo: Dict[str, str]) -> bool:
-        """
-        Clone or update a project repository.
-        
-        Args:
-            repo: Dictionary with repository details including:
-                 - name: Repository name
-                 - org: Organization name (optional)
-                 - host: Git host (optional)
-                 
-        Returns:
-            bool: True if successful, False if there was an error
-        """
+        """Clone or update a project repository."""
         try:
             async with self.semaphore:
-                # Get repository details
                 repo_name = repo["name"]
                 repo_org = repo.get("org", self.repo_org)
                 repo_host = repo.get("host", self.github_host)
@@ -273,13 +309,31 @@ class ProjectInitializer:
                     await process.communicate()
                 else:
                     print(f"Cloning repository {repo_name}...")
-                    repo_url = f"git@{repo_host}:{repo_org}/{repo_name}.git"
+                    # Try SSH first
+                    ssh_url = f"git@{repo_host}:{repo_org}/{repo_name}.git"
                     process = await asyncio.create_subprocess_exec(
-                        "git", "clone", repo_url, str(repo_dir),
+                        "git", "clone", ssh_url, str(repo_dir),
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE
                     )
-                    await process.communicate()
+                    _, stderr = await process.communicate()
+                    if process.returncode != 0:
+                        # If SSH fails, try HTTPS
+                        if "Permission denied (publickey)" in stderr.decode():
+                            print("SSH authentication failed, trying HTTPS...")
+                            https_url = f"https://{repo_host}/{repo_org}/{repo_name}.git"
+                            process = await asyncio.create_subprocess_exec(
+                                "git", "clone", https_url, str(repo_dir),
+                                stdout=asyncio.subprocess.PIPE,
+                                stderr=asyncio.subprocess.PIPE
+                            )
+                            _, stderr = await process.communicate()
+                            if process.returncode != 0:
+                                print(f"❌ Failed to clone {repo_name}: {stderr.decode()}")
+                                return False
+                        else:
+                            print(f"❌ Failed to clone {repo_name}: {stderr.decode()}")
+                            return False
                 return True
         except Exception as e:
             print(f"❌ Error processing {repo_name}: {str(e)}")
@@ -486,8 +540,7 @@ def main():
             sys.exit(1)
         asyncio.run(handle_git_operations(initializer, args))
     else:
-        # Run initialization or nuke operation
-        asyncio.run(initializer.run(nuke=args.nuke))
+        asyncio.run(initializer.run(args.nuke))
 
 if __name__ == "__main__":
     main()

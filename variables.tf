@@ -330,5 +330,5 @@ variable "documentation_sources" {
 variable "docs_base_path" {
   type        = string
   description = "Base path where documentation repositories will be cloned. Supports environment variables (VAR) and shell expansion (~)"
-  default     = "~/.gproj/docs"
+  default     = "$${userHome}/.gproj/docs"
 }
