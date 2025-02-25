@@ -35,7 +35,7 @@ output "deployment_config" {
 
 output "files" {
   description = "List of files to be created by this module"
-  value = [
+  value = [for file in [
     {
       name = ".github/prompts/development-guidelines.prompt.md"
       content = templatefile("${path.module}/templates/development-guidelines.prompt.md", {
@@ -49,8 +49,8 @@ output "files" {
       name = ".github/workflows/ci.yml"
       content = templatefile("${path.module}/templates/ci.yml", {
         testing_requirements = try(var.testing_requirements, {})
-        languages            = local.detected_languages
+        languages           = local.detected_languages
       })
     }
-  ]
+  ] : file if file.name != "CODEOWNERS" && file.name != ".github/CODEOWNERS"]
 }

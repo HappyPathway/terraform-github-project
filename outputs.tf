@@ -84,13 +84,12 @@ output "copilot_files" {
   description = "Paths to the GitHub Copilot files for each repository"
   value = {
     master = {
-      instructions = try("${module.base_repo.github_repo.name}/.github/copilot-instructions.md", null)
-      prompt       = try("${module.base_repo.github_repo.name}/.github/prompts/${var.project_name}.prompt.md", null)
+      instructions = ".github/copilot-instructions.md"
+      prompt       = try(".github/prompts/${var.project_name}.prompt.md", null)
     }
     repos = {
       for name, repo in module.project_repos : name => {
-        instructions = try("${repo.github_repo.name}/.github/copilot-instructions.md", null)
-        prompt       = try("${repo.github_repo.name}/.github/prompts/${name}.prompt.md", null)
+        prompt = try(".github/prompts/${name}.prompt.md", null)
       }
     }
   }

@@ -45,22 +45,25 @@ output "repository_files" {
 
 output "files" {
   description = "List of files to be created by this module"
-  value = [
-    {
-      name = ".github/copilot-instructions.md"
-      content = templatefile("${path.module}/templates/copilot-instructions.prompt.md", {
-        project_name    = var.project_name
-        repository_name = var.repositories[0].name
-        languages       = local.detected_languages
-        frameworks      = local.detected_frameworks
-        testing_tools   = local.detected_testing_tools
-        iac_tools       = local.detected_iac_tools
-        cloud_providers = local.detected_cloud_providers
-        security_tools  = local.detected_security_tools
-        instructions    = var.copilot_instructions
-      })
-    }
-  ]
+  value = concat(
+    [
+      {
+        name = ".github/copilot-instructions.md"
+        content = templatefile("${path.module}/templates/copilot-instructions.prompt.md", {
+          project_name    = var.project_name
+          repository_name = var.repositories[0].name
+          languages       = local.detected_languages
+          frameworks      = local.detected_frameworks
+          testing_tools   = local.detected_testing_tools
+          iac_tools       = local.detected_iac_tools
+          cloud_providers = local.detected_cloud_providers
+          security_tools  = local.detected_security_tools
+          instructions    = var.copilot_instructions
+        })
+      }
+    ],
+    local.files  # Only includes repo-specific prompt files
+  )
 }
 
 output "copilot_files" {

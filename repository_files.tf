@@ -1,22 +1,12 @@
-# Base repository files configuration
+########################################################################
+# File definitions that determine which files go to which repositories
+########################################################################
+
 locals {
-  # Core repository files for all repos
+  ##########################################
+  # Files that go to ALL repositories
+  ##########################################
   standard_files = [
-    {
-      name = ".projg",
-      content = jsonencode({
-        project_name = var.project_name
-        repo_org = var.repo_org
-        docs_base_path = var.docs_base_path
-        documentation_sources = var.documentation_sources
-        repositories = [
-          for repo in var.repositories : {
-            name = repo.name
-            description = lookup(repo, "description", "${var.project_name}::${repo.name}")
-          }
-        ]
-      })
-    },
     {
       name = "README.md",
       content = templatefile("${path.module}/templates/README.md", {
@@ -26,24 +16,22 @@ locals {
         repositories = [
           for repo in var.repositories : {
             repo             = repo.name
-            repo_description = lookup(repo, "description", "${var.project_name}::${repo.name}") # Ensure empty string if null
+            repo_description = lookup(repo, "description", "${var.project_name}::${repo.name}")
           }
         ]
       })
     },
     {
-      name = ".github/CODEOWNERS",
-      content = templatefile("${path.module}/templates/CODEOWNERS", {
-        codeowners = var.project_owners
-      })
-    },
-    {
       name    = ".github/pull_request_template.md",
-      content = file("${path.module}/templates/pull_request_template.md")
+      content = file("${path.module}/templates/github/pull_request_template.md")
     }
   ]
 
-  # Project prompt file (for base repo only)
+  ##########################################
+  # Files that ONLY go to base repository
+  ##########################################
+
+  # Project prompt file - only in base repo
   project_prompt_file = [
     {
       content = var.project_prompt
@@ -51,7 +39,7 @@ locals {
     }
   ]
 
-  # VS Code workspace configuration from development_environment module
+  # VS Code workspace configuration - only in base repo
   workspace_config_files = [
     for file in module.development_environment.files :
     {
@@ -60,27 +48,21 @@ locals {
     }
   ]
 
-  # Module files from various feature modules - keep original paths from modules
+  # Module files for infrastructure setup - only in base repo
   base_module_files = concat(
     module.security.files,
     module.development.files,
     module.infrastructure.files,
     module.quality.files,
-    module.copilot.files,
+    [
+      # Only include copilot files that aren't repo-specific prompts
+      for file in module.copilot.files :
+      file if !can(regex("^.github/prompts/[^/]+.prompt.md$", file.name))
+    ],
     [
       {
-        name = "scripts/projg",
-        content = templatefile("${path.module}/templates/project_git_manager.py.tpl", {
-          project_name = var.project_name
-          repo_org     = var.repo_org
-          repositories = jsonencode([
-            for repo in var.repositories :
-            {
-              name        = repo.name
-              description = lookup(repo, "description", "${var.project_name}::${repo.name}") # Ensure empty string if null
-            }
-          ])
-        })
+        name    = "scripts/gproj",
+        content = file("${path.module}/scripts/gproj")
       },
       {
         name    = "scripts/requirements.txt",
@@ -89,17 +71,32 @@ locals {
     ]
   )
 
-  # Copilot prompts - repo-specific prompts only
-  repo_copilot_prompts = {
-    for name, repo in local.project_repositories : name => [
-      {
-        name    = ".github/prompts/${name}.prompt.md"
-        content = repo.prompt == null ? try(repo.description, "Repository-specific prompt for ${name}") : repo.prompt
-      }
-    ]
+  # .gproj config - only in base repo
+  gproj_config = {
+    name = ".gproj"
+    content = templatefile("${path.module}/templates/gproj.json.tftpl", {
+      project_name   = var.project_name
+      repo_org       = var.repo_org
+      project_prompt = var.project_prompt
+      docs_base_path = "~/.gproj/docs"
+      documentation_sources = [
+        for source in var.documentation_sources : {
+          repo = source.repo
+          name = replace(source.name, "^docs/+", "")
+          path = coalesce(source.path, ".")
+          tag  = try(source.tag, "main")
+        }
+      ]
+      repositories = [
+        for repo in var.repositories : {
+          name        = repo.name
+          description = lookup(repo, "description", "${var.project_name}::${repo.name}")
+        }
+      ]
+    })
   }
 
-  # Handle managed extra files for base repo
+  # Extra managed files for base repo only
   extra_repo_files = local.base_repo_config.managed_extra_files == null ? [] : [
     for file in local.base_repo_config.managed_extra_files : {
       name    = file.path
@@ -107,37 +104,53 @@ locals {
     }
   ]
 
-  # Base repository files module (gets all module files and base config)
-  repository_files = concat(
-    local.standard_files,
-    local.project_prompt_file,
-    local.extra_repo_files,
-    local.base_module_files,
-    local.workspace_config_files
-  )
+  ##########################################
+  # Final file lists for each repo type
+  ##########################################
 
-  # Project repository files module (gets only repo-specific files)
+  # BASE REPOSITORY: Gets all module files and base config
+  repository_files = [
+    for file in concat(
+      local.standard_files,         # Standard files that all repos get
+      local.project_prompt_file,    # Project-level prompt file 
+      local.extra_repo_files,       # Any extra managed files
+      local.base_module_files,      # Infrastructure module files
+      local.workspace_config_files, # VS Code workspace config
+      [local.gproj_config]          # Project config file
+    ) : file if file.name != "CODEOWNERS" && file.name != ".github/CODEOWNERS"
+  ]
+
+  # PROJECT REPOSITORIES: Only get standard files + their specific prompt
   project_repository_files = {
-    for name, repo in local.project_repositories : name => concat(
-      local.standard_files,
-      local.repo_copilot_prompts[name] # Only this repo's specific prompt
-    )
+    for name, repo in local.project_repositories : name => [
+      for file in concat(
+        local.standard_files, # Standard files that all repos get
+        [
+          for file in module.copilot.files :
+          file if startswith(file.name, ".github/prompts/${name}") # Only repo's specific prompt
+        ]
+      ) : file if file.name != "CODEOWNERS" && file.name != ".github/CODEOWNERS"
+    ]
   }
 }
 
-# Base repository files module (gets all module files and base config)
+##########################################
+# Module calls to create the files
+##########################################
+
+# Creates ALL files in the base repository
 module "base_repository_files" {
   source = "./modules/repository_files"
 
   repository = module.base_repo.github_repo.name
   branch     = module.base_repo.default_branch
-  files      = local.repository_files
+  files      = local.repository_files # Gets everything defined above except CODEOWNERS
   mkfiles    = var.mkfiles
 
   depends_on = [module.base_repo]
 }
 
-# Project repository files module (gets only repo-specific files)
+# Creates standard files + repo-specific prompt in each project repository
 module "project_repository_files" {
   source = "./modules/repository_files"
   for_each = {
@@ -146,7 +159,7 @@ module "project_repository_files" {
 
   repository = each.key
   branch     = module.project_repos[each.key].default_branch
-  files      = local.project_repository_files[each.key]
+  files      = local.project_repository_files[each.key] # Only standard files + repo's prompt
   mkfiles    = var.mkfiles
 
   depends_on = [module.project_repos]

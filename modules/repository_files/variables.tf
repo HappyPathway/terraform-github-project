@@ -37,3 +37,12 @@ variable "mkfiles" {
   description = "Whether to create repository files. Set to false for initial repo creation, then true to create files."
   default     = false
 }
+
+variable commit {
+  description = "Commit author and email"
+  type        = object({
+    author = optional(string, null)
+    email  = optional(string, null)
+  })
+  default = {}
+}

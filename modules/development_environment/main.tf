@@ -1,4 +1,9 @@
+# This Terraform configuration manages development environment settings for VS Code workspaces
+# and development containers, including extensions, settings, and workspace configurations.
+
 locals {
+  # Default VS Code settings that will be applied to all workspaces
+  # These settings ensure consistent formatting and editor behavior across the team
   default_vscode_settings = {
     "editor.formatOnSave" : true,
     "editor.rulers" : [80, 120],
@@ -7,18 +12,22 @@ locals {
       "editor.formatOnSave" : true,
       "editor.formatOnSaveMode" : "file"
     },
-    "files.exclude": {
-      "**/.git": true,
-      "**/.DS_Store": true
+    "files.exclude" : {
+      "**/.git" : true,
+      "**/.DS_Store" : true
     },
-    "workbench.iconTheme": "vscode-icons",
-    "editor.inlineSuggest.enabled": true,
-    "github.copilot.enable": {
-      "*": true
-    }
+    "workbench.iconTheme" : "vscode-icons",
+    "editor.inlineSuggest.enabled" : true,
+    "github.copilot.enable" : {
+      "*" : true
+    },
+    # Add required variables for copilot-workspace configuration
+    "project_name" : var.project_name,
+    "repo_org" : var.repo_org
   }
 
-  # Topic to extension mappings
+  # Maps repository topics to relevant VS Code extensions
+  # This allows automatic extension recommendations based on the technologies used in each repository
   topic_extension_mappings = {
     "terraform" = [
       "hashicorp.terraform",
@@ -38,7 +47,8 @@ locals {
     ]
   }
 
-  # Process extensions based on repository topics
+  # Processes and flattens all extensions needed based on repository topics
+  # This creates a unique list of extensions by analyzing all repository topics
   topic_based_extensions = distinct(flatten([
     for repo in var.repositories :
     flatten([
@@ -47,23 +57,34 @@ locals {
     ])
   ]))
 
-  # Documentation folders for workspace
+  # Processes and validates documentation folder paths
+  # Ensures all documentation paths are properly formatted and located under .gproj/docs/{orgName}/{repoName} directory
   doc_folders = [
     for source in var.documentation_sources : {
       name = source.name
-      path = "${var.docs_base_path}/${source.name}/${source.path}"
+      path = "${var.docs_base_path}/${var.repo_org}/${var.project_name}/${source.name}"
     }
   ]
 
-  # Workspace folders (combine existing and documentation folders)
-  workspace_folders = concat(
-    [for repo in var.repositories : {
+  # Processes and validates repository folder paths
+  # Ensures all repository paths are relative to the parent directory
+  repo_folders = [
+    for repo in var.repositories : {
       name = repo.name
       path = "../${repo.name}"
-    }],
-    local.doc_folders
-  )
+    }
+  ]
 
+  # Combines all workspace folders into a single distinct list
+  # This includes repository folders, documentation folders, and additional workspace files
+  workspace_folders = distinct(concat(
+    local.repo_folders,
+    local.doc_folders,
+    var.workspace_files
+  ))
+
+  # Processes and combines VS Code settings
+  # Merges default settings with any custom settings provided
   effective_vscode = {
     settings = merge(local.default_vscode_settings, try(var.vs_code_workspace.settings, {}))
     extensions = {
@@ -78,6 +99,8 @@ locals {
     launch_configurations = try(var.vs_code_workspace.launch_configurations, [])
   }
 
+  # Development container configuration with default values
+  # Configures the development environment when using VS Code Remote Containers
   development_container = can(var.development_container) ? {
     base_image = try(var.development_container.base_image, "ubuntu:latest")
     vs_code_extensions = distinct(concat(
@@ -91,25 +114,10 @@ locals {
       enabled  = false
       services = {}
     })
-    } : {
-    base_image           = "ubuntu:latest"
-    vs_code_extensions   = []
-    ports                = []
-    env_vars             = {}
-    post_create_commands = []
-    docker_compose = {
-      enabled  = false
-      services = {}
-    }
-  }
+  } : null
 
-  # .projg configuration
-  projg_config = {
-    docs_base_path = var.docs_base_path
-    documentation_sources = var.documentation_sources
-  }
-
-  # Development environment files
+  # Generates all required development environment files
+  # This includes DevContainer configuration and VS Code workspace settings
   files = concat(
     var.setup_dev_container ? [
       {
@@ -137,29 +145,22 @@ locals {
         })
       }
     ] : [],
-    # VS Code workspace configuration
+    # VS Code workspace configuration with validated paths
     [
       {
         name = "${var.project_name}.code-workspace"
         content = jsonencode({
-          folders = local.workspace_folders
+          folders  = local.workspace_folders
           settings = local.effective_vscode.settings
           extensions = {
             recommendations = local.effective_vscode.extensions.recommended
           }
           tasks = local.effective_vscode.tasks
           launch = {
-            version = "0.2.0"
+            version        = "0.2.0"
             configurations = local.effective_vscode.launch_configurations
           }
         })
-      }
-    ],
-    # .projg configuration
-    [
-      {
-        name = ".projg"
-        content = jsonencode(local.projg_config)
       }
     ]
   )

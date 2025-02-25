@@ -3,6 +3,16 @@ variable "project_name" {
   description = "Name of the project"
 }
 
+variable "repo_org" {
+  type        = string
+  description = "GitHub organization or username that owns the repositories"
+}
+
+variable "project_prompt" {
+  type        = string
+  description = "Project prompt for GitHub Copilot configuration"
+}
+
 variable "vs_code_workspace" {
   type = object({
     settings = optional(map(any))
@@ -46,11 +56,22 @@ variable "workspace_files" {
   }))
   default     = []
   description = "Additional files to include in the VS Code workspace configuration"
+
+  validation {
+    condition = alltrue([
+      for file in var.workspace_files :
+      can(regex("^[^<>:\"|?*]+$", file.path)) # Disallow invalid path characters
+    ])
+    error_message = "Workspace file paths contain invalid characters. Paths must not contain: < > : \" | ? *"
+  }
 }
 
 variable "repositories" {
-  type = list(any)
-  description = "List of repositories to include in the workspace"
+  type = list(object({
+    name = string
+    topics = optional(list(string), [])
+  }))
+  description = "List of repositories to include in the workspace. Each repository can specify its own host."
 }
 
 variable "documentation_sources" {
@@ -62,24 +83,32 @@ variable "documentation_sources" {
   }))
   description = "List of external repositories to clone as documentation/reference sources"
   default     = []
+
+  validation {
+    condition = alltrue([
+      for source in var.documentation_sources : (
+        can(regex("^(https://|git@)", source.repo)) &&                     # Must be HTTPS or SSH URL
+        can(regex("^[a-zA-Z0-9/_-]+$", source.name)) &&                   # Alphanumeric + common separators
+        (source.path == null || can(regex("^[^<>:\"|?*]+$", source.path))) # Valid path if specified
+      )
+    ])
+    error_message = "Documentation sources must use valid Git URLs (HTTPS or SSH), have valid names (alphanumeric with - and _), and valid paths"
+  }
 }
 
 variable "docs_base_path" {
   type        = string
-  description = "Base path where documentation repositories will be cloned. Supports environment variables (${VAR}) and shell expansion (~)"
-  default     = "~/.projg/docs"
+  description = "Base path where documentation repositories will be cloned. Supports environment variables (VAR) and shell expansion (~)"
+  default     = "~/.gproj/docs"
+
+  validation {
+    condition     = can(regex("^[~$][^<>:\"|?*]+$", var.docs_base_path))
+    error_message = "docs_base_path must start with ~ or $ and contain only valid path characters"
+  }
 }
 
-locals {
-  workspace_folders = concat(
-    [{
-      name = var.project_name
-      path = "."
-    }],
-    [for repo in var.repositories : {
-      name = repo.name
-      path = "../${repo.name}"
-    }],
-    var.workspace_files
-  )
+variable "github_host" {
+  description = "The GitHub host to use. Defaults to github.com, but can be set to a custom GitHub Enterprise host"
+  type        = string
+  default     = "github.com"
 }

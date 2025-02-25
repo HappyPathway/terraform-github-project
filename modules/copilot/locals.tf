@@ -28,9 +28,9 @@ locals {
     for repo in var.repositories : try(repo.github_repo_topics, [])
     if can(regex("^(eslint|pylint|golint)$", repo.github_repo_topics[0]))
   ]))
-  generated_copilot_instructions = <<-EOT
-# Generated GitHub Copilot Instructions
-## Project Languages
+
+  generated_copilot_instructions = var.copilot_instructions != null ? var.copilot_instructions : <<-EOT
+## Project Technologies
 ${join("\n", [for lang in local.detected_languages : "- ${lang}"])}
 ## Frameworks
 ${join("\n", [for framework in local.detected_frameworks : "- ${framework}"])}
@@ -48,12 +48,13 @@ EOT
   repository_files = {
     for repo in var.repositories : repo.name => {
       repo_prompt = lookup(repo, "prompt", null) != null ? {
-        path    = ".github/prompts/${repo.name}.prompt.md"
+        path    = ".github/prompts/${repo.name}.prompt.md"  # Repo-specific prompts stay in .github/prompts/
         content = repo.prompt
       } : null
     }
   }
 
+  # Files to be created (only repo-specific prompts)
   files = flatten([
     for repo_name, files in local.repository_files : [
       files.repo_prompt == null ? {} : {

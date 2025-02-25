@@ -7,8 +7,8 @@ output "files" {
 output "workspace_config" {
   description = "VS Code workspace configuration"
   value = {
-    settings    = local.effective_vscode.settings
-    extensions  = local.effective_vscode.extensions
+    settings   = local.effective_vscode.settings
+    extensions = local.effective_vscode.extensions
     tasks      = local.effective_vscode.tasks
     launch     = local.effective_vscode.launch_configurations
   }

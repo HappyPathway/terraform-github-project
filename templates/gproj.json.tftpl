@@ -1,0 +1,22 @@
+{
+  "project_name": "${project_name}",
+  "repo_org": "${repo_org}",
+  "project_prompt": "${project_prompt}",
+  "docs_base_path": "~/.gproj/docs",
+  "documentation_sources": ${jsonencode([
+    for source in documentation_sources: {
+      repo = source.repo
+      name = replace(source.name, "^docs/+", "")
+      path = coalesce(source.path, ".")
+      tag = try(source.tag, "main")
+    }
+  ])},
+  "repositories": ${jsonencode([
+    for repo in repositories: {
+      name = repo.name
+      path = "../${repo.name}"
+      description = lookup(repo, "description", "${project_name}::${repo.name}")
+    }
+  ])},
+  "enable_claude_3_7_sonnet": "Enable Claude 3.7 Sonnet (Preview) for all clients"
+}

@@ -28,7 +28,7 @@ output "files" {
       name = ".github/prompts/security-requirements.prompt.md"
       content = templatefile("${path.module}/templates/security-requirements.prompt.md", {
         repository_name = var.repositories[0].name
-        topics          = try(var.repositories[0].github_repo_topics, [])
+        topics          = try(var.repositories[0].topics, [])
         frameworks      = var.security_frameworks
       })
     },

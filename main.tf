@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Repositories data source
 # Base repository locals
 locals {
@@ -17,14 +26,17 @@ locals {
 
 # Development environment module
 module "development_environment" {
-  source = "./modules/development_environment"
-
+  source                = "./modules/development_environment"
   project_name          = var.project_name
+  repo_org              = var.repo_org
+  project_prompt        = var.project_prompt
   vs_code_workspace     = try(var.vs_code_workspace, {})
   development_container = try(var.development_container, null)
   setup_dev_container   = try(var.setup_dev_container, false)
   repositories          = var.repositories
   workspace_files       = try(var.workspace_files, [])
+  documentation_sources = var.documentation_sources
+  docs_base_path        = var.docs_base_path
 }
 
 # Security module

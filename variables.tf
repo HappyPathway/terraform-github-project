@@ -41,65 +41,14 @@ variable "enforce_prs" {
 }
 
 variable "repositories" {
-  description = "List of project repositories to create/manage"
   type = list(object({
-    name                                    = string
-    repo_org                                = optional(string)
-    create_repo                             = optional(bool, true)
-    github_repo_description                 = optional(string)
-    github_repo_topics                      = optional(list(string), [])
-    github_push_restrictions                = optional(list(string), [])
-    github_is_private                       = optional(bool, true)
-    github_auto_init                        = optional(bool, true)
-    github_allow_merge_commit               = optional(bool, false)
-    github_allow_squash_merge               = optional(bool, true)
-    github_allow_rebase_merge               = optional(bool, false)
-    github_delete_branch_on_merge           = optional(bool, true)
-    github_has_projects                     = optional(bool, true)
-    github_has_issues                       = optional(bool, false)
-    github_has_wiki                         = optional(bool, true)
-    github_default_branch                   = optional(string, "main")
-    github_required_approving_review_count  = optional(number, 1)
-    github_require_code_owner_reviews       = optional(bool, true)
-    github_dismiss_stale_reviews            = optional(bool, true)
-    github_enforce_admins_branch_protection = optional(bool, true)
-    additional_codeowners                   = optional(list(string), [])
-    prefix                                  = optional(string)
-    force_name                              = optional(bool, true)
-    github_org_teams                        = optional(list(any))
-    template_repo_org                       = optional(string)
-    template_repo                           = optional(string)
-    is_template                             = optional(bool, false)
-    admin_teams                             = optional(list(string), [])
-    required_status_checks = optional(object({
-      contexts = list(string)
-      strict   = optional(bool, false)
-    }))
-    archived = optional(bool, false)
-    secrets = optional(list(object({
-      name  = string
-      value = string
-    })), [])
-    vars = optional(list(object({
-      name  = string
-      value = string
-    })), [])
-    extra_files = optional(list(object({
-      path    = string
-      content = string
-    })), [])
-    managed_extra_files = optional(list(object({
-      path    = string
-      content = string
-    })))
-    pull_request_bypassers = optional(list(string), [])
-    create_codeowners      = optional(bool, true)
-    enforce_prs            = optional(bool, false)
-    collaborators          = optional(map(string), {})
-    archive_on_destroy     = optional(bool, true)
-    vulnerability_alerts   = optional(bool, false)
-    gitignore_template     = optional(string)
-    homepage_url           = optional(string)
+    name                 = string
+    prompt               = string
+    topics               = optional(list(string), [])
+    create_repo          = optional(bool, true)
+    vulnerability_alerts = optional(bool, true)
+    enforce_prs          = optional(bool, true)
+    default_branch       = optional(string, "main")
     security_and_analysis = optional(object({
       advanced_security = optional(object({
         status = string
@@ -111,9 +60,8 @@ variable "repositories" {
         status = string
       }))
     }))
-    prompt = optional(string)
   }))
-  default = []
+  description = "List of repositories to include in the workspace."
 }
 
 variable "base_repository" {
@@ -370,10 +318,10 @@ variable "mkfiles" {
 
 variable "documentation_sources" {
   type = list(object({
-    repo = string  # GitHub repository URL to clone
-    name = string  # Name to use in workspace file
-    path = string  # Path within the cloned repo to reference
-    tag  = optional(string, "main")  # Optional, defaults to main
+    repo = string                   # GitHub repository URL to clone
+    name = string                   # Name to use in workspace file
+    path = optional(string, ".")    # Optional, defaults to "." for top-level
+    tag  = optional(string, "main") # Optional, defaults to main
   }))
   description = "List of external repositories to clone as documentation/reference sources"
   default     = []
@@ -382,5 +330,5 @@ variable "documentation_sources" {
 variable "docs_base_path" {
   type        = string
   description = "Base path where documentation repositories will be cloned. Supports environment variables (VAR) and shell expansion (~)"
-  default     = "~/.projg/docs"
+  default     = "~/.gproj/docs"
 }
