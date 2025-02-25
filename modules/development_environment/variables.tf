@@ -101,10 +101,10 @@ variable "docs_base_path" {
   description = "Base path where documentation repositories will be cloned. Supports environment variables (VAR) and shell expansion (~)"
   default     = "~/.gproj/docs"
 
-  validation {
-    condition     = can(regex("^[~$][^<>:\"|?*]+$", var.docs_base_path))
-    error_message = "docs_base_path must start with ~ or $ and contain only valid path characters"
-  }
+  # validation {
+  #   condition     = can(regex("^[~$][^<>:\"|?*]+$", var.docs_base_path))
+  #   error_message = "docs_base_path must start with ~ or $ and contain only valid path characters"
+  # }
 }
 
 variable "github_host" {

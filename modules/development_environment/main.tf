@@ -22,8 +22,7 @@ locals {
       "*" : true
     },
     # Add required variables for copilot-workspace configuration
-    "project_name" : var.project_name,
-    "repo_org" : var.repo_org
+    "project_name" : var.project_name
   }
 
   # Maps repository topics to relevant VS Code extensions
@@ -57,22 +56,17 @@ locals {
     ])
   ]))
 
-  # Extract just the repo name from a URL or org/repo format
+  # Extract repository name from URL or org/repo format
   extract_repo_name = { for source in var.documentation_sources :
     source.name => (
-      replace(
-        # Take the last part after / or :
-        element(
-          split("/", 
-            replace(
-              replace(source.repo, "^git@[^:]+:", ""), 
-              "^https?://[^/]+/", ""
-            )
-          ),
-          -1
-        ),
-        "\\.git$", "" # Remove .git suffix if present
-      )
+      length(regexall("^git@", source.repo)) > 0 ?
+        # SSH format: git@github.com:org/repo.git
+        element(split("/", regex("^git@[^:]+:([^/]+/[^.]+)(?:\\.git)?$", source.repo)[0]), 1) :
+      length(regexall("^https?://", source.repo)) > 0 ?
+        # HTTPS format: https://github.com/org/repo
+        element(split("/", regex("^https?://[^/]+/([^/]+/[^/]+?)(?:\\.git)?/?$", source.repo)[0]), 1) :
+      # Plain format: org/repo
+      element(split("/", source.repo), 1)
     )
   }
 
@@ -83,12 +77,12 @@ locals {
       path = join("/", compact([
         var.docs_base_path,
         local.extract_repo_name[source.name],
-        source.path  # Include the path within the repository
+        trimsuffix(source.path, ".")
       ]))
     }
   ])
 
-  # Process repository paths
+  # Process repository paths (excluding base repo)
   repo_folders = distinct([
     for repo in var.repositories : {
       name = repo.name
@@ -97,12 +91,18 @@ locals {
   ])
 
   # Combines all workspace folders into a single distinct list
-  # This includes repository folders, documentation folders, and additional workspace files
-  workspace_folders = distinct(concat(
+  # Base repo is first, followed by other repos and doc folders
+  workspace_folders = concat(
+    # Base repo (current directory)
+    [{
+      name = var.project_name
+      path = "."
+    }],
+    # Other repositories and documentation folders
     local.repo_folders,
     local.doc_folders,
     var.workspace_files
-  ))
+  )
 
   # Processes and combines VS Code settings
   # Merges default settings with any custom settings provided
