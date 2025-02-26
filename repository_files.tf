@@ -77,20 +77,20 @@ locals {
     content = templatefile("${path.module}/templates/gproj.json.tftpl", {
       project_name   = var.project_name
       repo_org       = var.repo_org
-      docs_base_path = "~/.gproj/docs" # Base path, repos will be direct children
+      docs_base_path = var.docs_base_path # Base path, repos will be direct children
       documentation_sources = [
-        for source in var.documentation_sources : {
+        for source in distinct(var.documentation_sources) : {
           repo = source.repo
           name = replace(source.name, "^docs/+", "")
           path = coalesce(source.path, ".") # Keep original path for workspace mapping
           tag  = try(source.tag, "main")
-        }
+        } if source != null
       ]
       repositories = [
-        for repo in var.repositories : {
+        for repo in distinct(var.repositories) : {
           name        = repo.name
           description = lookup(repo, "description", "${var.project_name}::${repo.name}")
-        }
+        } if repo != null
       ]
     })
   }

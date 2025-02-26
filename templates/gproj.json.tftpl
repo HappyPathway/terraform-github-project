@@ -2,6 +2,6 @@
   "project_name": "${project_name}",
   "repo_org": "${repo_org}",
   "docs_base_path": "${docs_base_path}",
-  "documentation_sources": ${jsonencode(documentation_sources)},
-  "repositories": ${jsonencode(repositories)}
+  "documentation_sources": ${jsonencode(distinct(documentation_sources))},
+  "repositories": ${jsonencode(distinct(repositories))}
 }
