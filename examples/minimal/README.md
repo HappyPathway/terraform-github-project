@@ -1,59 +1,29 @@
-# Minimal GitHub Project Configuration Example
+# Minimal Example
 
-This example shows the minimum required configuration for setting up a GitHub project with:
-- A base repository
-- One project repository
-- Prompts configured for both repositories
+This example demonstrates the most basic usage of the terraform-github-project module to create a single public repository with required configuration.
 
-## Required Variables
-- `project_name` - Name of the project, used for base repository
-- `repo_org` - GitHub organization name
-- `project_prompt` - Main project prompt content
-
-## Default Settings Applied
-
-### Base Repository
-- Repository visibility: private
-- Branch protection: enabled
-  - Requires pull requests
-  - 1 approving review
-  - Stale review dismissal
-  - Code owner reviews required
-  - Linear history required
-- Git settings:
-  - Squash merges allowed
-  - Merge commits disabled
-  - Branch deletion on merge
-- Features enabled:
-  - Issues
-  - Wiki
-  - Projects
-- Security:
-  - Vulnerability alerts enabled
-  - Branch protection enforced for admins
-
-### Project Repositories
-- Same defaults as base repository
-- Inherits branch protection settings
-- Prompt files stored in `.github/prompts/` directory
+## Features Demonstrated
+- Basic repository creation
+- Public visibility (no GitHub Pro required)
+- Required variable configuration
 
 ## Usage
 
+1. Create a terraform.tfvars file with your configuration:
 ```hcl
-module "github_project" {
-  source = "../../"
-
-  project_name    = "my-project"
-  repo_org        = "my-org"
-  project_prompt  = "This is the main project prompt that will be used across repos"
-
-  repositories = [
-    {
-      name   = "service-a"
-      prompt = "Service A specific prompt"
-    }
-  ]
-
-  base_repository = {}
-}
+repo_org = "your-org-name"
+project_name = "your-project-name"
+project_prompt = "Description of your project for AI tooling"
 ```
+
+2. Initialize and apply:
+```bash
+terraform init
+terraform apply
+```
+
+## Requirements
+- GitHub personal access token with repo permissions
+- No GitHub Pro subscription required
+- terraform 1.6.0 or later
+- GitHub provider 5.0 or later

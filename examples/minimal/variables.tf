@@ -1,11 +1,14 @@
 variable "project_name" {
-  type = string
+  description = "Name of the project. Will be used as the base repository name."
+  type        = string
 }
 
 variable "repo_org" {
-  type = string
+  description = "GitHub organization name"
+  type        = string
 }
 
 variable "project_prompt" {
-  type = string
+  description = "Content for the project's prompt file"
+  type        = string
 }
