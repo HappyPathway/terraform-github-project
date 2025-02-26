@@ -1,0 +1,7 @@
+{
+    "project_name": "terraform-github-project",
+    "repo_org": "terraform-github",
+    "repositories": [
+        {"name": "terraform-github-repo"}
+    ]
+}

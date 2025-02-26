@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../docs/terraform/website/docs/language/modules"
+		},
+		{
+			"path": "../morpheus-workspace"
 		}
 	],
 	"settings": {}
