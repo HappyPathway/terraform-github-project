@@ -161,13 +161,13 @@ Below is the complete configuration reference for this module. For detailed exam
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_github"></a> [github](#requirement\_github) | ~> 5.0 |
+| <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_github"></a> [github](#provider\_github) | 5.45.0 |
+| <a name="provider_github"></a> [github](#provider\_github) | 6.5.0 |
 
 ## Modules
 
