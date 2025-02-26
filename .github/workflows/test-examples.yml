@@ -13,10 +13,8 @@ on:
       - '.github/workflows/test-examples.yml'
 
 env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  GITHUB_ORG: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
-  GITHUB_OWNER: ${{ vars.GITHUB_ORG || 'HappyPathway' }}
-  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_ORG: ${{ vars.GITHUB_ORG }}
 
 jobs:
   test-examples:
@@ -26,12 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - django-app
-          - java-microservices
           - minimal
-          - multi-tier-webapp
-          - python-service
-          - terraform-workspace
+          - multi-repo
+          - infrastructure
 
     steps:
       - name: Checkout
@@ -56,10 +51,15 @@ jobs:
           project_prompt = "Example project for testing ${{ matrix.example }} configuration"
           EOF
 
-      - name: Terraform Init and Apply
+      - name: Initialize Terraform
         working-directory: examples/${{ matrix.example }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          terraform init
-          terraform apply -auto-approve
+        run: terraform init
+
+      - name: Plan Terraform Changes
+        working-directory: examples/${{ matrix.example }}
+        run: terraform plan
+
+      - name: Apply Terraform Changes
+        working-directory: examples/${{ matrix.example }}
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
