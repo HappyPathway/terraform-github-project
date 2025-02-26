@@ -1,0 +1,1 @@
+# GitHub Copilot configuration and settings

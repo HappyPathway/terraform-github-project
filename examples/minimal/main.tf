@@ -7,31 +7,26 @@ terraform {
   required_providers {
     github = {
       source  = "integrations/github"
+      version = "~> 6.2"
     }
   }
 }
 
-module "github_project" {
-  source = "../../"
+provider "github" {}
 
-  # Required parameters
-  project_name    = "my-project"
-  repo_org        = "HappyPathway"
-  project_prompt  = "This is the main project prompt that will be used across repos"
-  
-  # Minimal repository configuration with public visibility
-  repositories = [
-    {
-      name       = "service-a"
-      prompt     = "Service A specific prompt"
-      visibility = "public"  # Make repository public
-      github_is_private = false
-      enforce_prs = false
-    }
-  ]
+module "github_project" {
+  source = "../.." # Reference to parent module
+
+  # Required variables
+  repo_org       = var.repo_org
+  project_name   = var.project_name
+  project_prompt = var.project_prompt
+
+  # All repositories must be public without GitHub Pro
   base_repository = {
-    name        = "my-project"
-    description = "Main project repository"
-    visibility  = "public"
+    visibility = "public"
   }
+
+  # Minimal repository configuration
+  repositories = [] # No additional repositories in minimal example
 }

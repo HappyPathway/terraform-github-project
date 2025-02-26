@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../github-projects"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../smartprompt"
+		}
+	],
+	"settings": {}
+}

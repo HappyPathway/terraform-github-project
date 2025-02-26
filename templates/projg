@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""Project git management script"""
+import argparse
+import asyncio
+import json
+import os
+import sys
+import shutil
+import subprocess
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Union
+
+class DocSourceManager:
+    def __init__(self):
+        self.config_path = Path(".gproj")
+        self.config = self.load_config()
+        self.semaphore = asyncio.Semaphore(5)
+
+    def load_config(self) -> Dict:
+        """Load .gproj configuration file"""
+        if not self.config_path.exists():
+            return {
+                "project_name": "",
+                "repo_org": "",
+                "docs_base_path": "~/.gproj/docs",  # Will get extended with org/project when used
+                "documentation_sources": []
+            }
+        return json.loads(self.config_path.read_text())
+
+    def expand_path(self, path: str) -> str:
+        """Expand environment variables and ~ in path"""
+        return os.path.expandvars(os.path.expanduser(path))
+
+    def transform_doc_path(self, source: Dict) -> str:
+        """Transform documentation source path to include org and project"""
+        if not self.config.get("project_name") or not self.config.get("repo_org"):
+            return self.expand_path(f"{self.config['docs_base_path']}/{source['name']}")
+        
+        base = self.expand_path(f"{self.config['docs_base_path']}/{self.config['repo_org']}/{self.config['project_name']}")
+        return f"{base}/{source['name']}"
+
+    async def clone_doc_repo(self, repo: Dict) -> bool:
+        """Clone a documentation repository"""
+        try:
+            repo_dir = Path(self.transform_doc_path(repo))
+            if repo_dir.exists():
+                print(f"Documentation repo {repo['name']} exists, checking out {repo['tag']}...")
+                process = await asyncio.create_subprocess_exec(
+                    "git", "-C", str(repo_dir), "fetch", "--all",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+                process = await asyncio.create_subprocess_exec(
+                    "git", "-C", str(repo_dir), "checkout", repo["tag"],
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+            else:
+                print(f"Cloning documentation repo {repo['name']}...")
+                repo_dir.parent.mkdir(parents=True, exist_ok=True)
+                clone_url = f"git@github.com:{repo['repo']}.git"
+                if clone_url in cloned_repos:
+                    print(f" Skipping {repo['name']}, already cloned")
+                    return True
+                process = await asyncio.create_subprocess_exec(
+                    "git", "clone", "--depth", "1", "-b", repo["tag"], 
+                    clone_url, str(repo_dir),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                _, stderr = await process.communicate()
+                if process.returncode != 0:
+                    print(f"❌ Failed to clone {repo['name']}: {stderr.decode()}")
+                    return False
+            return True
+        except Exception as e:
+            print(f"❌ Error processing {repo['name']}: {str(e)}")
+            return False
+
+    async def process_doc_sources(self) -> None:
+        """Process all documentation sources"""
+        if not self.config["documentation_sources"]:
+            return
+
+        print("\nProcessing documentation sources...")
+        tasks = []
+        for source in self.config["documentation_sources"]:
+            tasks.append(self.clone_doc_repo(source))
+        
+        results = await asyncio.gather(*tasks)
+        failed = len([r for r in results if not r])
+        if failed:
+            print(f"Warning: {failed} documentation source(s) failed to clone", file=sys.stderr)
+
+class ProjectInitializer:
+    def __init__(self):
+        self.config_path = Path(".gproj")
+        if not self.config_path.exists():
+            print("❌ No .gproj configuration file found")
+            sys.exit(1)
+        
+        config = json.loads(self.config_path.read_text())
+        self.project_name = config.get("project_name")
+        self.repo_org = config.get("repo_org")
+        self.repositories = config.get("repositories", [])
+        
+        if not all([self.project_name, self.repo_org, self.repositories]):
+            print("❌ Missing required configuration in .gproj file")
+            sys.exit(1)
+            
+        self.base_dir = Path("..").resolve()
+        self.semaphore = asyncio.Semaphore(5)
+        self.doc_manager = DocSourceManager()
+
+    async def run(self, nuke: bool = False) -> None:
+        """Run initialization or nuke operation"""
+        if nuke:
+            await self.nuke_repositories()
+        else:
+            await self.init_repositories()
+            # Process doc sources after repo initialization
+            await self.doc_manager.process_doc_sources()
+
+    # ...rest of ProjectInitializer methods remain unchanged...
+
+async def handle_git_operations(initializer: ProjectInitializer, args) -> None:
+    """Handle git operations based on command line arguments"""
+    doc_manager = DocSourceManager()
+    
+    if args.command == "init":
+        await doc_manager.process_doc_sources()
+        # ... rest of init handling ...
+    elif args.command == "nuke":
+        # Do not remove documentation sources during nuke
+        # ... rest of nuke handling ...
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description="Project git management")
+    subparsers = parser.add_subparsers(dest="command")
+    
+    init_parser = subparsers.add_parser("init", help="Initialize project")
+    nuke_parser = subparsers.add_parser("nuke", help="Remove project files")
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    asyncio.run(handle_git_operations(ProjectInitializer(), args))
+
+if __name__ == "__main__":
+    main()
