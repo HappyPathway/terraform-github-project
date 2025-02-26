@@ -39,17 +39,13 @@ output "module_config" {
 }
 
 output "files" {
-  description = "List of files to be created by this module"
-  value = [
-    {
-      name = ".github/prompts/infrastructure-guidelines.prompt.md"
-      content = templatefile("${path.module}/templates/infrastructure-guidelines.prompt.md", {
+  description = "Map of files to be created in repositories"
+  value = length(var.repositories) > 0 ? {
+    ".github/workflows/terraform.yml" = {
+      content = templatefile("${path.module}/templates/terraform.yml.tpl", {
         repository_name = var.repositories[0].name
-        iac_tools       = local.detected_iac_tools
-        cloud_providers = local.detected_cloud_providers
-        has_kubernetes  = local.has_kubernetes
-        iac_config      = try(var.iac_config, {})
+        branch          = "main"
       })
     }
-  ]
+  } : {}
 }

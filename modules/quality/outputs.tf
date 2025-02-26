@@ -24,18 +24,14 @@ output "has_type_checking" {
 }
 
 output "files" {
-  description = "List of files to be created by this module"
-  value = [
-    {
-      name = ".github/prompts/quality-standards.prompt.md"
-      content = templatefile("${path.module}/templates/quality-standards.prompt.md", {
-        repository_name     = var.repositories[0].name
-        linting_tools       = local.detected_linting_tools
-        formatting_tools    = local.detected_formatting_tools
-        documentation_tools = local.detected_documentation_tools
-        has_type_checking   = local.has_type_checking
-        quality_config      = try(var.quality_config, {})
+  description = "Map of files to be created in repositories"
+  value = length(var.repositories) > 0 ? {
+    ".github/workflows/quality.yml" = {
+      content = templatefile("${path.module}/templates/quality.yml.tpl", {
+        repository_name    = var.repositories[0].name
+        branch             = "main"
+        code_quality_tools = try(local.detected_linting_tools, [])
       })
     }
-  ]
+  } : {}
 }

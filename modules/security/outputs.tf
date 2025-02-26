@@ -22,22 +22,19 @@ output "compliance_config" {
 }
 
 output "files" {
-  description = "List of files to be created by this module"
-  value = [
-    {
-      name = ".github/prompts/security-requirements.prompt.md"
-      content = templatefile("${path.module}/templates/security-requirements.prompt.md", {
+  description = "Map of files to be created in repositories"
+  value = length(var.repositories) > 0 ? {
+    ".github/workflows/security.yml" = {
+      content = templatefile("${path.module}/templates/security.yml.tpl", {
         repository_name = var.repositories[0].name
-        topics          = try(var.repositories[0].topics, [])
-        frameworks      = var.security_frameworks
-      })
-    },
-    {
-      name = ".github/security/SECURITY.md"
-      content = templatefile("${path.module}/templates/SECURITY.md", {
-        repository_name = var.repositories[0].name
-        frameworks      = var.security_frameworks
+        branch          = "main"
       })
     }
-  ]
+    ".github/workflows/container-security.yml" = {
+      content = templatefile("${path.module}/templates/container-security.yml.tpl", {
+        repository_name = var.repositories[0].name
+        branch          = "main"
+      })
+    }
+  } : {}
 }

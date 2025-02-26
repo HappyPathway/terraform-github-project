@@ -50,13 +50,13 @@ locals {
 
   # Module files for infrastructure setup - only in base repo
   base_module_files = concat(
-    module.security.files,
-    module.development.files,
-    module.infrastructure.files,
-    module.quality.files,
+    values(module.security.files),
+    values(module.development.files),
+    values(module.infrastructure.files),
+    values(module.quality.files),
     [
       # Only include copilot files that aren't repo-specific prompts
-      for file in module.copilot.files :
+      for file in values(module.copilot.files) :
       file if !can(regex("^.github/prompts/[^/]+.prompt.md$", file.name))
     ],
     [
